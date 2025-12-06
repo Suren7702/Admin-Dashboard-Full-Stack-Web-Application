@@ -10,6 +10,9 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+// ✅ Use your env variable here
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const TEAM_COLORS = [
   "#60a5fa", // blue-400
   "#34d399", // emerald-400
@@ -39,7 +42,7 @@ export default function DashboardHome() {
         setStatsLoading(true);
         setStatsError("");
 
-        const res = await fetch("http://localhost:5000/api/members/stats", {
+        const res = await fetch(`${API_URL}/api/members/stats`, {
           headers: {
             Authorization: getToken() ? `Bearer ${getToken()}` : "",
           },
@@ -69,7 +72,7 @@ export default function DashboardHome() {
         setMaanaduLoading(true);
         setMaanaduError("");
 
-        const res = await fetch("http://localhost:5000/api/members/maanadu", {
+        const res = await fetch(`${API_URL}/api/members/maanadu`, {
           headers: {
             Authorization: getToken() ? `Bearer ${getToken()}` : "",
           },
