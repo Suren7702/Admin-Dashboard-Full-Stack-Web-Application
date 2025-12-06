@@ -1,6 +1,6 @@
 // src/pages/auth/Login.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // ⬅️ add Link here
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -125,6 +125,16 @@ export default function Login() {
             {submitting ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        {/* 🔐 Secret registration link */}
+        <div className="mt-4 text-center text-xs text-gray-400">
+          <Link
+            to="/secret-register"
+            className="text-emerald-400 hover:text-emerald-300"
+          >
+            Need to create a new admin? Use secret registration →
+          </Link>
+        </div>
       </div>
     </div>
   );
