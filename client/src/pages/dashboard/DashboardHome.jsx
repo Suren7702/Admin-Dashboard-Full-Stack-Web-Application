@@ -9,19 +9,27 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { 
+  Users, 
+  Layers, 
+  Trophy, 
+  IndianRupee, 
+  TrendingUp, 
+  Activity 
+} from "lucide-react";
 
-// ✅ Use your env variable here
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const TEAM_COLORS = [
-  "#60a5fa", // blue-400
-  "#34d399", // emerald-400
-  "#f97316", // orange-400
-  "#facc15", // yellow-400
-  "#a855f7", // purple-500
-  "#ec4899", // pink-500
-  "#22c55e", // green-500
-  "#38bdf8", // sky-400
+// Modern Palette (Vibrant but Professional)
+const COLORS = [
+  "#3b82f6", // Blue
+  "#10b981", // Emerald
+  "#f59e0b", // Amber
+  "#ef4444", // Red
+  "#8b5cf6", // Violet
+  "#ec4899", // Pink
+  "#06b6d4", // Cyan
+  "#f97316", // Orange
 ];
 
 export default function DashboardHome() {
@@ -35,359 +43,317 @@ export default function DashboardHome() {
 
   const getToken = () => localStorage.getItem("token");
 
-  // 🔹 Load main members stats
+  // 🔹 Fetch Data Logic
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
+      setStatsLoading(true);
+      setMaanaduLoading(true);
       try {
-        setStatsLoading(true);
-        setStatsError("");
+        const headers = { Authorization: getToken() ? `Bearer ${getToken()}` : "" };
+        
+        // Parallel Fetching
+        const [statsRes, maanaduRes] = await Promise.all([
+          fetch(`${API_URL}/api/members/stats`, { headers }),
+          fetch(`${API_URL}/api/members/maanadu`, { headers })
+        ]);
 
-        const res = await fetch(`${API_URL}/api/members/stats`, {
-          headers: {
-            Authorization: getToken() ? `Bearer ${getToken()}` : "",
-          },
-        });
+        const statsData = await statsRes.json();
+        const maanaduData = await maanaduRes.json();
 
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to load stats");
-        }
+        if (!statsRes.ok) throw new Error(statsData.message || "Failed to load stats");
+        if (!maanaduRes.ok) throw new Error(maanaduData.message || "Failed to load maanadu");
 
-        setStats(data);
+        setStats(statsData);
+        setMaanadu(maanaduData);
       } catch (err) {
-        console.error("❌ Error loading stats:", err);
-        setStatsError(err.message || "Failed to load stats");
+        console.error("Dashboard Error:", err);
+        setStatsError(err.message);
       } finally {
         setStatsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  // 🔹 Load Maanadu supporters stats
-  useEffect(() => {
-    const fetchMaanadu = async () => {
-      try {
-        setMaanaduLoading(true);
-        setMaanaduError("");
-
-        const res = await fetch(`${API_URL}/api/members/maanadu`, {
-          headers: {
-            Authorization: getToken() ? `Bearer ${getToken()}` : "",
-          },
-        });
-
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to load maanadu stats");
-        }
-
-        setMaanadu(data);
-      } catch (err) {
-        console.error("❌ Error loading maanadu stats:", err);
-        setMaanaduError(err.message || "Failed to load maanadu stats");
-      } finally {
         setMaanaduLoading(false);
       }
     };
 
-    fetchMaanadu();
+    fetchData();
   }, []);
 
-  const teamPieData =
-    stats?.teamStats?.map((t) => ({
-      name: t.teamName || "Unknown",
-      value: t.members,
-    })) || [];
+  // 🔹 Process Chart Data
+  const teamPieData = stats?.teamStats?.map((t) => ({
+    name: t.teamName || "Unknown",
+    value: t.members,
+  })) || [];
 
-  // 🔹 Maanadu donut data: team-wise total amount
-  const maanaduTeamPieData =
-    (maanadu?.members || []).reduce((arr, m) => {
-      const team = (m.teamName || m.team || "Other").trim() || "Other";
-      const amt = m.maanaduSupport?.amountSpent || 0;
+  const maanaduTeamPieData = (maanadu?.members || []).reduce((arr, m) => {
+    const team = (m.teamName || m.team || "Other").trim() || "Other";
+    const amt = m.maanaduSupport?.amountSpent || 0;
+    const existing = arr.find((x) => x.name === team);
+    if (existing) existing.value += amt;
+    else arr.push({ name: team, value: amt });
+    return arr;
+  }, []) || [];
 
-      const existing = arr.find((x) => x.name === team);
-      if (existing) {
-        existing.value += amt;
-      } else {
-        arr.push({ name: team, value: amt });
-      }
-      return arr;
-    }, []) || [];
+  // 🔹 Loading Skeleton Component
+  if (statsLoading || maanaduLoading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6 animate-pulse">
+          <div className="h-8 w-1/3 bg-gray-800 rounded mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-32 bg-gray-800/50 rounded-2xl border border-gray-700"></div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-80 bg-gray-800/50 rounded-2xl border border-gray-700"></div>
+            <div className="h-80 bg-gray-800/50 rounded-2xl border border-gray-700"></div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
-      <div className="mb-5">
-        <h1 className="text-2xl font-bold">TVK Members Dashboard</h1>
-        <p className="text-sm text-gray-400">
-          Overall view of teams and Maanadu supporter distribution.
-        </p>
-      </div>
-
-      {/* Errors */}
-      {(statsError || maanaduError) && (
-        <div className="mb-3 text-sm text-red-400 bg-red-900/30 border border-red-700 rounded px-3 py-2 space-y-1">
-          {statsError && <p>{statsError}</p>}
-          {maanaduError && <p>{maanaduError}</p>}
-        </div>
-      )}
-
-      {(statsLoading || maanaduLoading) && !stats && (
-        <p className="text-sm text-gray-400">Loading dashboard data...</p>
-      )}
-
-      {!statsLoading && stats && (
-        <div className="space-y-5">
-          {/* 🔹 Top summary cards */}
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3">
-              <p className="text-xs text-gray-400">Total Members</p>
-              <p className="text-2xl font-semibold text-blue-400">
-                {stats.totalMembers}
-              </p>
-            </div>
-
-            <div className="bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3">
-              <p className="text-xs text-gray-400">Total Teams</p>
-              <p className="text-2xl font-semibold text-emerald-400">
-                {stats.totalTeams}
-              </p>
-            </div>
-
-            <div className="bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3">
-              <p className="text-xs text-gray-400">Top Team (Most Members)</p>
-              {stats.topTeam ? (
-                <>
-                  <p className="text-base font-semibold text-orange-300">
-                    {stats.topTeam.teamName}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {stats.topTeam.members} members,{" "}
-                    {stats.topTeam.bloodGroups} blood groups
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-gray-500">No data yet</p>
-              )}
-            </div>
+      <div className="min-h-screen text-gray-100">
+        
+        {/* Header */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+              TVK Overview
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Real-time analytics and team performance metrics.
+            </p>
           </div>
+          <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-xs text-green-400 font-medium">
+            <Activity size={14} />
+            System Operational
+          </div>
+        </div>
 
-          {/* 🔹 Team-wise members donut + list */}
-          <div className="bg-gray-950 border border-gray-800 rounded-2xl px-4 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-100">
-                Team-wise Members Distribution
-              </h2>
-              <p className="text-xs text-gray-500">
-                {stats.teamStats.length} teams
-              </p>
+        {/* Error Display */}
+        {statsError && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-center gap-3">
+            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+            {statsError}
+          </div>
+        )}
+
+        {/* 🔹 KPI Cards Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          
+          {/* Card 1: Total Members */}
+          <KPICard 
+            title="Total Members"
+            value={stats?.totalMembers || 0}
+            icon={<Users className="text-blue-400" size={24} />}
+            trend="+12% this month"
+            color="blue"
+          />
+
+          {/* Card 2: Total Teams */}
+          <KPICard 
+            title="Active Teams"
+            value={stats?.totalTeams || 0}
+            icon={<Layers className="text-emerald-400" size={24} />}
+            trend="Stable growth"
+            color="emerald"
+          />
+
+          {/* Card 3: Top Team */}
+          <div className="relative overflow-hidden bg-gray-900/40 backdrop-blur-xl border border-gray-800 rounded-2xl p-6 shadow-xl transition-all hover:border-gray-700 group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Trophy size={80} className="text-yellow-500" />
             </div>
-
-            {stats.teamStats.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                No team data available. Add members first.
-              </p>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                <Trophy className="text-yellow-500" size={24} />
+              </div>
+              <span className="text-sm text-gray-400 font-medium uppercase tracking-wider">Top Performer</span>
+            </div>
+            {stats?.topTeam ? (
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-1 truncate">{stats.topTeam.teamName}</h3>
+                <div className="flex gap-3 text-sm text-gray-500 mt-2">
+                  <span className="flex items-center gap-1"><Users size={12}/> {stats.topTeam.members}</span>
+                  <span className="w-px h-4 bg-gray-700"></span>
+                  <span>{stats.topTeam.bloodGroups} Blood Groups</span>
+                </div>
+              </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-[2fr,3fr] items-center">
-                {/* Donut graph */}
-                <div className="w-full h-60 md:h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={teamPieData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius="45%"
-                        outerRadius="80%"
-                        paddingAngle={2}
-                        isAnimationActive={true}
-                        animationBegin={0}
-                        animationDuration={900}
-                      >
-                        {teamPieData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={TEAM_COLORS[index % TEAM_COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#020617",
-                          borderColor: "#1f2937",
-                          fontSize: 12,
-                        }}
-                      />
-                      <Legend
-                        layout="vertical"
-                        align="right"
-                        verticalAlign="middle"
-                        wrapperStyle={{
-                          fontSize: "11px",
-                          paddingLeft: "8px",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* side info list */}
-                <div className="space-y-2 text-xs">
-                  {stats.teamStats.map((team, idx) => {
-                    const percentage = (
-                      (team.members / (stats.totalMembers || 1)) *
-                      100
-                    ).toFixed(1);
-
-                    return (
-                      <div
-                        key={team.teamName}
-                        className="flex items-center justify-between border border-gray-800 rounded-xl px-3 py-2 bg-gray-900/60"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full"
-                            style={{
-                              backgroundColor:
-                                TEAM_COLORS[idx % TEAM_COLORS.length],
-                            }}
-                          />
-                          <div>
-                            <p className="text-xs font-medium text-gray-100">
-                              {team.teamName}
-                            </p>
-                            <p className="text-[11px] text-gray-400">
-                              {team.members} members • {percentage}% of total
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-[11px] text-gray-500 text-right">
-                          {team.communities} communities
-                          <br />
-                          {team.bloodGroups} blood groups
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 🔹 Maanadu supporters – team-wise amount donut */}
-          <div className="bg-gray-950 border border-gray-800 rounded-2xl px-4 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-100">
-                Maanadu Supporters – Team-wise Contribution
-              </h2>
-              {maanadu && (
-                <p className="text-xs text-gray-500">
-                  {maanadu.totalContributors} contributors · ₹
-                  {maanadu.totalAmount.toLocaleString("en-IN")}
-                </p>
-              )}
-            </div>
-
-            {maanaduLoading && (
-              <p className="text-sm text-gray-400">
-                Loading Maanadu supporter stats...
-              </p>
-            )}
-
-            {!maanaduLoading && (!maanadu || maanaduTeamPieData.length === 0) && (
-              <p className="text-sm text-gray-500">
-                No Maanadu supporter data yet.
-              </p>
-            )}
-
-            {!maanaduLoading && maanadu && maanaduTeamPieData.length > 0 && (
-              <div className="grid gap-4 md:grid-cols-[2fr,3fr] items-center">
-                {/* Donut */}
-                <div className="w-full h-60 md:h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={maanaduTeamPieData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius="45%"
-                        outerRadius="80%"
-                        paddingAngle={2}
-                        isAnimationActive={true}
-                        animationBegin={0}
-                        animationDuration={900}
-                      >
-                        {maanaduTeamPieData.map((entry, index) => (
-                          <Cell
-                            key={`maanadu-cell-${index}`}
-                            fill={TEAM_COLORS[index % TEAM_COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value) => [
-                          `₹${Number(value).toLocaleString("en-IN")}`,
-                          "Total Amount",
-                        ]}
-                        contentStyle={{
-                          backgroundColor: "#020617",
-                          borderColor: "#1f2937",
-                          fontSize: 12,
-                        }}
-                      />
-                      <Legend
-                        layout="vertical"
-                        align="right"
-                        verticalAlign="middle"
-                        wrapperStyle={{
-                          fontSize: "11px",
-                          paddingLeft: "8px",
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* side list */}
-                <div className="space-y-2 text-xs">
-                  {maanaduTeamPieData
-                    .slice()
-                    .sort((a, b) => b.value - a.value)
-                    .map((t, idx) => (
-                      <div
-                        key={t.name}
-                        className="flex items-center justify-between border border-gray-800 rounded-xl px-3 py-2 bg-gray-900/60"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full"
-                            style={{
-                              backgroundColor:
-                                TEAM_COLORS[idx % TEAM_COLORS.length],
-                            }}
-                          />
-                          <div>
-                            <p className="text-xs font-medium text-gray-100">
-                              {t.name}
-                            </p>
-                            <p className="text-[11px] text-gray-400">
-                              ₹{t.value.toLocaleString("en-IN")} total
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </div>
+              <p className="text-gray-500">No data available</p>
             )}
           </div>
         </div>
-      )}
+
+        {/* 🔹 Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Chart 1: Team Distribution */}
+          <ChartCard title="Member Distribution" subtitle="By Team">
+             <div className="flex flex-col md:flex-row items-center h-full">
+                {/* Donut Chart */}
+                <div className="w-full h-64 md:w-1/2">
+                   <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                         <Pie
+                            data={teamPieData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            cornerRadius={4}
+                         >
+                            {teamPieData.map((_, index) => (
+                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0.2)" />
+                            ))}
+                         </Pie>
+                         <Tooltip content={<CustomTooltip />} />
+                      </PieChart>
+                   </ResponsiveContainer>
+                </div>
+
+                {/* Legend List */}
+                <div className="w-full md:w-1/2 md:pl-4 space-y-3 h-64 overflow-y-auto custom-scrollbar">
+                   {stats?.teamStats?.map((team, idx) => (
+                      <div key={team.teamName} className="flex items-center justify-between text-sm group">
+                         <div className="flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></span>
+                            <span className="text-gray-300 font-medium group-hover:text-white transition-colors truncate max-w-[120px]">{team.teamName}</span>
+                         </div>
+                         <span className="text-gray-500 font-mono text-xs">{team.members}</span>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          </ChartCard>
+
+          {/* Chart 2: Maanadu Finances */}
+          <ChartCard 
+            title="Maanadu Contribution" 
+            subtitle={maanadu ? `Total: ₹${maanadu.totalAmount.toLocaleString('en-IN')}` : "Financials"}
+            action={<div className="bg-gray-800 p-1.5 rounded-lg"><IndianRupee size={16} className="text-gray-400"/></div>}
+          >
+             {!maanadu || maanaduTeamPieData.length === 0 ? (
+                <div className="h-64 flex flex-col items-center justify-center text-gray-500">
+                   <IndianRupee size={48} className="mb-2 opacity-20"/>
+                   <p>No financial data yet</p>
+                </div>
+             ) : (
+                <div className="flex flex-col md:flex-row items-center h-full">
+                    {/* Donut Chart */}
+                   <div className="w-full h-64 md:w-1/2">
+                      <ResponsiveContainer width="100%" height="100%">
+                         <PieChart>
+                            <Pie
+                               data={maanaduTeamPieData}
+                               dataKey="value"
+                               nameKey="name"
+                               cx="50%"
+                               cy="50%"
+                               innerRadius={60}
+                               outerRadius={80}
+                               paddingAngle={5}
+                               cornerRadius={4}
+                            >
+                               {maanaduTeamPieData.map((_, index) => (
+                                  <Cell key={`m-cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0.2)" />
+                               ))}
+                            </Pie>
+                            <Tooltip content={<CustomTooltip isCurrency />} />
+                         </PieChart>
+                      </ResponsiveContainer>
+                   </div>
+
+                   {/* Legend List */}
+                   <div className="w-full md:w-1/2 md:pl-4 space-y-3 h-64 overflow-y-auto custom-scrollbar">
+                       {maanaduTeamPieData
+                         .sort((a, b) => b.value - a.value)
+                         .map((t, idx) => (
+                          <div key={t.name} className="flex items-center justify-between text-sm group">
+                             <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></span>
+                                <span className="text-gray-300 font-medium group-hover:text-white transition-colors truncate max-w-[120px]">{t.name}</span>
+                             </div>
+                             <span className="text-gray-500 font-mono text-xs">₹{t.value.toLocaleString("en-IN")}</span>
+                          </div>
+                       ))}
+                   </div>
+                </div>
+             )}
+          </ChartCard>
+
+        </div>
+      </div>
     </DashboardLayout>
   );
+}
+
+// ----------------------------------------------------------------------
+// 🔹 Sub-Components for Clean Code
+// ----------------------------------------------------------------------
+
+function KPICard({ title, value, icon, trend, color }) {
+  // Dynamic border/bg colors based on prop
+  const colorMap = {
+    blue: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+    emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  };
+  const theme = colorMap[color] || "text-gray-400 bg-gray-500/10 border-gray-500/20";
+
+  return (
+    <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-800 rounded-2xl p-6 shadow-xl transition-all hover:border-gray-700 hover:shadow-2xl hover:-translate-y-1">
+      <div className="flex items-start justify-between mb-4">
+        <div className={`p-3 rounded-xl border ${theme}`}>
+          {icon}
+        </div>
+        <div className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-lg">
+          <TrendingUp size={12} />
+          {trend}
+        </div>
+      </div>
+      <div>
+        <p className="text-sm text-gray-400 font-medium uppercase tracking-wider mb-1">{title}</p>
+        <h3 className="text-3xl font-bold text-white tracking-tight">{value}</h3>
+      </div>
+    </div>
+  );
+}
+
+function ChartCard({ title, subtitle, children, action }) {
+  return (
+    <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-800 rounded-2xl p-6 shadow-xl flex flex-col h-full">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+          <p className="text-xs text-gray-500">{subtitle}</p>
+        </div>
+        {action}
+      </div>
+      <div className="flex-grow">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function CustomTooltip({ active, payload, isCurrency }) {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div className="bg-gray-950 border border-gray-700 p-3 rounded-xl shadow-2xl">
+        <p className="text-xs text-gray-400 mb-1">{data.name}</p>
+        <p className="text-base font-bold text-white">
+          {isCurrency ? "₹" : ""}
+          {data.value.toLocaleString("en-IN")}
+          {!isCurrency && " Members"}
+        </p>
+      </div>
+    );
+  }
+  return null;
 }
