@@ -3,6 +3,77 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../../layout/DashboardLayout.jsx";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// 🥇 Role priority helper (Tamil + English)
+const getRolePriority = (rawRole) => {
+  const role = (rawRole || "").toLowerCase().trim();
+
+  if (!role) return 999; // no role → bottom
+
+  // 1. District Secretary / மாவட்ட செயலாளர்
+  if (
+    role.includes("district secretary") ||
+    (role.includes("மாவட்ட") && role.includes("செயலாளர்"))
+  ) {
+    return 1;
+  }
+
+  // 2. Union Secretary / ஒன்றிய செயலாளர்
+  if (
+    role.includes("union secretary") ||
+    (role.includes("ஒன்றிய") && role.includes("செயலாளர்"))
+  ) {
+    return 2;
+  }
+
+  // 3. Town / City secretary
+  if (
+    role.includes("town secretary") ||
+    role.includes("city secretary") ||
+    (role.includes("நகர") && role.includes("செயலாளர்"))
+  ) {
+    return 3;
+  }
+
+  // 4. Area / Ward level
+  if (
+    role.includes("area secretary") ||
+    role.includes("ward secretary") ||
+    (role.includes("வட்ட") && role.includes("செயலாளர்")) ||
+    (role.includes("ஊராட்சி") && role.includes("செயலாளர்"))
+  ) {
+    return 4;
+  }
+
+  // 5. In-charges / coordinators
+  if (
+    role.includes("coordinator") ||
+    role.includes("incharge") ||
+    role.includes("in-charge") ||
+    role.includes("இணை ஒருங்கிணைப்பாளர்") ||
+    role.includes("ஒருங்கிணைப்பாளர்")
+  ) {
+    return 5;
+  }
+
+  // 6. General executive / worker
+  if (
+    role.includes("executive") ||
+    role.includes("committee") ||
+    role.includes("worker") ||
+    role.includes("செயலர்") ||
+    role.includes("துணை செயலாளர்")
+  ) {
+    return 6;
+  }
+
+  // 7. Plain "member"
+  if (role.includes("member") || role.includes("உறுப்பினர்")) {
+    return 7;
+  }
+
+  // others → bottom
+  return 900;
+};
 
 export default function Members() {
   const [members, setMembers] = useState([]);
@@ -57,12 +128,25 @@ export default function Members() {
       if (!res.ok) {
         throw new Error(data.message || "Failed to load members");
       }
-
+      
       let list = [];
       if (Array.isArray(data)) list = data;
       else if (Array.isArray(data.members)) list = data.members;
 
-      setMembers(list);
+// 🔽 sort by role priority first, then by name
+      list.sort((a, b) => {
+      const pa = getRolePriority(a.role);
+      const pb = getRolePriority(b.role);
+
+      if (pa !== pb) return pa - pb;
+
+  // same priority → sort by name (Tamil-aware)
+      return (a.name || "").localeCompare(b.name || "", "ta-IN");
+    });
+
+    setMembers(list);
+
+
     } catch (err) {
       console.error("❌ Error loading members:", err);
       setError(err.message || "Something went wrong");
