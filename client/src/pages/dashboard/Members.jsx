@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layout/DashboardLayout.jsx";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function Members() {
   const [members, setMembers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -45,7 +47,7 @@ export default function Members() {
       setLoading(true);
       setError("");
 
-      const res = await fetch("http://localhost:5000/api/members", {
+      const res = await fetch(`${API_URL}/api/members`, {
         headers: {
           Authorization: getToken() ? `Bearer ${getToken()}` : "",
         },
@@ -78,7 +80,7 @@ export default function Members() {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/members/teams", {
+        const res = await fetch(`${API_URL}/api/members/teams`, {
           headers: {
             Authorization: getToken() ? `Bearer ${getToken()}` : "",
           },
@@ -157,8 +159,8 @@ export default function Members() {
       const isEdit = Boolean(editingId);
 
       const url = isEdit
-        ? `http://localhost:5000/api/members/${editingId}`
-        : "http://localhost:5000/api/members";
+        ? `${API_URL}/api/members/${editingId}`
+        : `${API_URL}/api/members`;
 
       const method = isEdit ? "PUT" : "POST";
 
@@ -549,7 +551,9 @@ export default function Members() {
                             Maanadu Support
                           </span>
                           <p className="text-[11px] text-emerald-300 mt-1">
-                            ₹{(maanadu.amountSpent || 0).toLocaleString("en-IN")}
+                            ₹{(maanadu.amountSpent || 0).toLocaleString(
+                              "en-IN"
+                            )}
                           </p>
                         </div>
                       )}
@@ -623,7 +627,7 @@ export default function Members() {
 
                           try {
                             const res = await fetch(
-                              `http://localhost:5000/api/members/${m._id}`,
+                              `${API_URL}/api/members/${m._id}`,
                               {
                                 method: "DELETE",
                                 headers: {
