@@ -168,7 +168,7 @@ export default function DashboardHome() {
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              TVK Overview
+              Overview
             </h1>
             <p className="text-sm text-gray-500 mt-1">
               Real-time analytics and team performance metrics.

@@ -1,3 +1,4 @@
+// server/src/models/User.js
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
@@ -9,6 +10,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["admin", "coordinator", "volunteer"],
       default: "admin",
+    },
+    // ✅ ADDED THIS FIELD (Critical for Approvals Page)
+    isApproved: { 
+      type: Boolean, 
+      default: false 
     },
   },
   { timestamps: true }
