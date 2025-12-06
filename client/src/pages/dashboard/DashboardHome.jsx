@@ -17,14 +17,16 @@ import {
   Activity 
 } from "lucide-react";
 
-// ✅ 1. IMPORT IMAGES
-// Ensure "logo.jfif" is your Thalaivar image. 
-// Add "gensec.jpg" and "distsec.jpg" to your assets folder later.
+// ✅ IMPORT IMAGES
+// Make sure these files exist in your assets folder
 import thalaivarImg from "../../assets/images/thalaivar.jfif"; 
 import GensecImg from "../../assets/images/gensec.avif"; 
-// Placeholders (Replace these with real imports when you have the photos)
-const GENSEC_IMG = "https://via.placeholder.com/150?text=Gen+Sec"; 
+import DtsecImg from "../../assets/images/dtsc.jpg"; 
+import leninImg from "../../assets/images/lenin.jpg"; 
+
+// 👇 Placeholders for the new cards (Replace these with real imports later)
 const DISTSEC_IMG = "https://via.placeholder.com/150?text=Dist+Sec";
+const DIST_PRES_IMG = "https://via.placeholder.com/150?text=Dist+Pres";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -98,7 +100,7 @@ export default function DashboardHome() {
     return (
       <DashboardLayout>
         <div className="space-y-6 animate-pulse">
-          <div className="h-32 w-full bg-gray-800/50 rounded-2xl mb-8"></div> {/* Banner Skeleton */}
+          <div className="h-48 w-full bg-gray-800/50 rounded-2xl mb-8"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-32 bg-gray-800/50 rounded-2xl border border-gray-700"></div>
@@ -117,49 +119,90 @@ export default function DashboardHome() {
     <DashboardLayout>
       <div className="min-h-screen text-gray-100">
         
-        {/* ================= LEADERSHIP BANNER (NEW) ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 items-center">
+        {/* ================= LEADERSHIP BANNER (4 CARDS) ================= */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-10 items-stretch">
           
-          {/* 1. GENERAL SECRETARY (Left) */}
-          <div className="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 shadow-lg relative overflow-hidden group hover:border-gray-600 transition-all">
-             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
-                <img src={GensecImg} alt="Gen Sec" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
-             </div>
-             <div className="z-10">
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 font-tamil">பொதுச் செயலாளர்</p>
-                <h3 className="text-base md:text-lg font-bold text-white font-tamil leading-tight">திரு. புஸ்ஸி N. ஆனந்த்</h3>
-                <p className="text-xs text-gray-500 mt-1">Ex. MLA</p>
-             </div>
-          </div>
+          {/* 1. GENERAL SECRETARY (Left - Spans 3 cols) */}
+         <div className="md:col-span-3 bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-lg relative overflow-hidden group hover:border-gray-600 transition-all">
+    <div className="w-20 h-20 rounded-full border-2 border-gray-600 overflow-hidden shadow-md mb-3">
+       {/* ✅ Added 'scale-[1.2]' to zoom in the image */}
+       <img 
+          src={GensecImg} 
+          alt="Gen Sec" 
+          className="w-full h-full object-cover object-top grayscale group-hover:grayscale-0 transition-all duration-500 scale-[1.2]" 
+       />
+    </div>
+    <div>
+       <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 font-tamil">பொதுச் செயலாளர்</p>
+       <h3 className="text-sm font-bold text-white font-tamil leading-tight">திரு. புஸ்ஸி N. ஆனந்த்</h3>
+       <p className="text-[10px] text-gray-500 mt-1">Ex. MLA</p>
+    </div>
+ </div>
 
-          {/* 2. THALAIVAR (Center - Big & Highlighted) */}
-          <div className="bg-gradient-to-b from-[#4a0404] to-[#2b0000] border-2 border-yellow-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden transform md:-translate-y-4 z-10 order-first md:order-none">
-             {/* Background Glow */}
-             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-500/20 via-transparent to-transparent"></div>
+          {/* 2. THALAIVAR (Center - Spans 6 cols - Big) */}
+          <div className="md:col-span-6 bg-gradient-to-b from-[#4a0404] to-[#2b0000] border-2 border-yellow-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden z-10 min-h-[220px]">
+   
+   {/* Background Glow */}
+   <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-500/20 via-transparent to-transparent"></div>
+   
+   <div className="relative z-10">
+      
+      {/* 1. Added 'overflow-hidden' to clip image to circle 
+          2. Removed negative margins for a clean look
+      */}
+      <div className="w-32 h-32 mx-auto rounded-full border-4 border-yellow-400 shadow-[0_0_25px_rgba(234,179,8,0.6)] overflow-hidden mb-4 bg-[#2b0000] relative">
+         <img 
+            src={thalaivarImg} 
+            alt="Thalaivar" 
+            // 3. 'object-top': Aligns image to top so HAIR IS VISIBLE
+            // 4. 'object-cover': Fills the circle without stretching
+            className="w-full h-full object-cover object-top" 
+         />
+      </div>
+      <h2 className="text-2xl font-extrabold text-white font-tamil drop-shadow-md">தளபதி திரு. விஜய்</h2>
+      <div className="inline-block bg-yellow-500 text-black text-[10px] font-black px-3 py-0.5 rounded-full mt-2 uppercase tracking-wider shadow-lg">
+         President / தலைவர்
+      </div>
+   </div>
+</div>
+
+          {/* 3. RIGHT COLUMN (Contains 2 Cards Stacked) */}
+          <div className="md:col-span-3 flex flex-col gap-4">
              
-             <div className="relative z-10">
-                <div className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-full border-4 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.5)] overflow-hidden mb-3">
-                   <img src={thalaivarImg} alt="Thalaivar" className="w-full h-full object-cover" />
+             {/* District Secretary */}
+             <div className="flex-1 bg-gradient-to-bl from-gray-900 to-gray-950 border border-yellow-500/50 rounded-2xl p-3 flex items-center gap-3 shadow-lg relative overflow-hidden group hover:border-yellow-400 transition-all">
+    
+           {/* ✅ NEW GOLDEN BADGE */}
+               <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-bl-lg shadow-sm z-10">
+                District Leader
                 </div>
-                <h2 className="text-xl md:text-2xl font-extrabold text-white font-tamil drop-shadow-md">தளபதி திரு. விஜய்</h2>
-                <div className="inline-block bg-yellow-500 text-black text-[10px] font-black px-3 py-0.5 rounded-full mt-2 uppercase tracking-wider shadow-lg">
-                   President / தலைவர்
+
+               {/* Image Container (Unchanged) */}
+                <div className="w-14 h-14 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
+                  <img src={DtsecImg} alt="Dist Sec" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+               </div>
+
+                {/* Text Container (Unchanged) */}
+               <div className="min-w-0 text-left">
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-tamil">மாவட்ட செயலாளர்</p>
+                  <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate">திரு.ரவிசங்கர்</h3>
+                  <p className="text-[9px] text-gray-500 mt-0.5">திருச்சி புறநகர் மேற்கு மாவட்டம் </p>
+                         </div>
+            </div>
+
+             {/* District President (New Card) */}
+             <div className="flex-1 bg-gradient-to-bl from-gray-900 to-gray-950 border border-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-lg relative overflow-hidden group hover:border-gray-600 transition-all">
+                <div className="w-14 h-14 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
+                   <img src={leninImg} alt="Dist Pres" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                </div>
+                <div className="min-w-0 text-left">
+                   <p className="text-[9px] text-gray-400 uppercase tracking-widest font-tamil">திருச்சி மண்டல ஒருங்கிணைப்பாளர்</p>
+                   <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate">திரு. லெனின் </h3>
+                   <p className="text-[9px] text-gray-500 mt-0.5">திருச்சி புறநகர் மேற்கு மாவட்டம் </p>
                 </div>
              </div>
-          </div>
 
-          {/* 3. DISTRICT SECRETARY (Right) */}
-          <div className="bg-gradient-to-bl from-gray-900 to-gray-950 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 shadow-lg relative overflow-hidden group hover:border-gray-600 transition-all md:flex-row-reverse text-right">
-             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
-                <img src={DISTSEC_IMG} alt="Dist Sec" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
-             </div>
-             <div className="z-10">
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 font-tamil">மாவட்ட செயலாளர்</p>
-                <h3 className="text-base md:text-lg font-bold text-white font-tamil leading-tight">திரு.ரவிசங்கர் </h3>
-                <p className="text-xs text-gray-500 mt-1">திருச்சி புறநகர் மேற்கு மாவட்டம் </p>
-             </div>
           </div>
-
         </div>
         
         {/* ================= EXISTING DASHBOARD CONTENT ================= */}
