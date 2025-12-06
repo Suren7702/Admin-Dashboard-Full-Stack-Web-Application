@@ -6,7 +6,6 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { 
@@ -18,18 +17,21 @@ import {
   Activity 
 } from "lucide-react";
 
+// ✅ 1. IMPORT IMAGES
+// Ensure "logo.jfif" is your Thalaivar image. 
+// Add "gensec.jpg" and "distsec.jpg" to your assets folder later.
+import thalaivarImg from "../../assets/images/thalaivar.jfif"; 
+import GensecImg from "../../assets/images/gensec.avif"; 
+// Placeholders (Replace these with real imports when you have the photos)
+const GENSEC_IMG = "https://via.placeholder.com/150?text=Gen+Sec"; 
+const DISTSEC_IMG = "https://via.placeholder.com/150?text=Dist+Sec";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// Modern Palette (Vibrant but Professional)
+// Modern Palette
 const COLORS = [
-  "#3b82f6", // Blue
-  "#10b981", // Emerald
-  "#f59e0b", // Amber
-  "#ef4444", // Red
-  "#8b5cf6", // Violet
-  "#ec4899", // Pink
-  "#06b6d4", // Cyan
-  "#f97316", // Orange
+  "#3b82f6", "#10b981", "#f59e0b", "#ef4444", 
+  "#8b5cf6", "#ec4899", "#06b6d4", "#f97316"
 ];
 
 export default function DashboardHome() {
@@ -51,7 +53,6 @@ export default function DashboardHome() {
       try {
         const headers = { Authorization: getToken() ? `Bearer ${getToken()}` : "" };
         
-        // Parallel Fetching
         const [statsRes, maanaduRes] = await Promise.all([
           fetch(`${API_URL}/api/members/stats`, { headers }),
           fetch(`${API_URL}/api/members/maanadu`, { headers })
@@ -92,12 +93,12 @@ export default function DashboardHome() {
     return arr;
   }, []) || [];
 
-  // 🔹 Loading Skeleton Component
+  // 🔹 Loading Skeleton
   if (statsLoading || maanaduLoading) {
     return (
       <DashboardLayout>
         <div className="space-y-6 animate-pulse">
-          <div className="h-8 w-1/3 bg-gray-800 rounded mb-6"></div>
+          <div className="h-32 w-full bg-gray-800/50 rounded-2xl mb-8"></div> {/* Banner Skeleton */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-32 bg-gray-800/50 rounded-2xl border border-gray-700"></div>
@@ -116,6 +117,53 @@ export default function DashboardHome() {
     <DashboardLayout>
       <div className="min-h-screen text-gray-100">
         
+        {/* ================= LEADERSHIP BANNER (NEW) ================= */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 items-center">
+          
+          {/* 1. GENERAL SECRETARY (Left) */}
+          <div className="bg-gradient-to-br from-gray-900 to-gray-950 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 shadow-lg relative overflow-hidden group hover:border-gray-600 transition-all">
+             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
+                <img src={GensecImg} alt="Gen Sec" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+             </div>
+             <div className="z-10">
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 font-tamil">பொதுச் செயலாளர்</p>
+                <h3 className="text-base md:text-lg font-bold text-white font-tamil leading-tight">திரு. புஸ்ஸி N. ஆனந்த்</h3>
+                <p className="text-xs text-gray-500 mt-1">Ex. MLA</p>
+             </div>
+          </div>
+
+          {/* 2. THALAIVAR (Center - Big & Highlighted) */}
+          <div className="bg-gradient-to-b from-[#4a0404] to-[#2b0000] border-2 border-yellow-500/50 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden transform md:-translate-y-4 z-10 order-first md:order-none">
+             {/* Background Glow */}
+             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-500/20 via-transparent to-transparent"></div>
+             
+             <div className="relative z-10">
+                <div className="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-full border-4 border-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.5)] overflow-hidden mb-3">
+                   <img src={thalaivarImg} alt="Thalaivar" className="w-full h-full object-cover" />
+                </div>
+                <h2 className="text-xl md:text-2xl font-extrabold text-white font-tamil drop-shadow-md">தளபதி திரு. விஜய்</h2>
+                <div className="inline-block bg-yellow-500 text-black text-[10px] font-black px-3 py-0.5 rounded-full mt-2 uppercase tracking-wider shadow-lg">
+                   President / தலைவர்
+                </div>
+             </div>
+          </div>
+
+          {/* 3. DISTRICT SECRETARY (Right) */}
+          <div className="bg-gradient-to-bl from-gray-900 to-gray-950 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 shadow-lg relative overflow-hidden group hover:border-gray-600 transition-all md:flex-row-reverse text-right">
+             <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
+                <img src={DISTSEC_IMG} alt="Dist Sec" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+             </div>
+             <div className="z-10">
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1 font-tamil">மாவட்ட செயலாளர்</p>
+                <h3 className="text-base md:text-lg font-bold text-white font-tamil leading-tight">திரு.ரவிசங்கர் </h3>
+                <p className="text-xs text-gray-500 mt-1">திருச்சி புறநகர் மேற்கு மாவட்டம் </p>
+             </div>
+          </div>
+
+        </div>
+        
+        {/* ================= EXISTING DASHBOARD CONTENT ================= */}
+
         {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -142,8 +190,6 @@ export default function DashboardHome() {
 
         {/* 🔹 KPI Cards Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          
-          {/* Card 1: Total Members */}
           <KPICard 
             title="Total Members"
             value={stats?.totalMembers || 0}
@@ -151,8 +197,6 @@ export default function DashboardHome() {
             trend="+12% this month"
             color="blue"
           />
-
-          {/* Card 2: Total Teams */}
           <KPICard 
             title="Active Teams"
             value={stats?.totalTeams || 0}
@@ -160,8 +204,6 @@ export default function DashboardHome() {
             trend="Stable growth"
             color="emerald"
           />
-
-          {/* Card 3: Top Team */}
           <div className="relative overflow-hidden bg-gray-900/40 backdrop-blur-xl border border-gray-800 rounded-2xl p-6 shadow-xl transition-all hover:border-gray-700 group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <Trophy size={80} className="text-yellow-500" />
@@ -193,7 +235,6 @@ export default function DashboardHome() {
           {/* Chart 1: Team Distribution */}
           <ChartCard title="Member Distribution" subtitle="By Team">
              <div className="flex flex-col md:flex-row items-center h-full">
-                {/* Donut Chart */}
                 <div className="w-full h-64 md:w-1/2">
                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
@@ -216,8 +257,6 @@ export default function DashboardHome() {
                       </PieChart>
                    </ResponsiveContainer>
                 </div>
-
-                {/* Legend List */}
                 <div className="w-full md:w-1/2 md:pl-4 space-y-3 h-64 overflow-y-auto custom-scrollbar">
                    {stats?.teamStats?.map((team, idx) => (
                       <div key={team.teamName} className="flex items-center justify-between text-sm group">
@@ -245,7 +284,6 @@ export default function DashboardHome() {
                 </div>
              ) : (
                 <div className="flex flex-col md:flex-row items-center h-full">
-                    {/* Donut Chart */}
                    <div className="w-full h-64 md:w-1/2">
                       <ResponsiveContainer width="100%" height="100%">
                          <PieChart>
@@ -268,12 +306,8 @@ export default function DashboardHome() {
                          </PieChart>
                       </ResponsiveContainer>
                    </div>
-
-                   {/* Legend List */}
                    <div className="w-full md:w-1/2 md:pl-4 space-y-3 h-64 overflow-y-auto custom-scrollbar">
-                       {maanaduTeamPieData
-                         .sort((a, b) => b.value - a.value)
-                         .map((t, idx) => (
+                       {maanaduTeamPieData.sort((a, b) => b.value - a.value).map((t, idx) => (
                           <div key={t.name} className="flex items-center justify-between text-sm group">
                              <div className="flex items-center gap-2">
                                 <span className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></span>
@@ -293,12 +327,8 @@ export default function DashboardHome() {
   );
 }
 
-// ----------------------------------------------------------------------
-// 🔹 Sub-Components for Clean Code
-// ----------------------------------------------------------------------
-
+// 🔹 Sub-Components
 function KPICard({ title, value, icon, trend, color }) {
-  // Dynamic border/bg colors based on prop
   const colorMap = {
     blue: "text-blue-400 bg-blue-500/10 border-blue-500/20",
     emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
@@ -308,12 +338,9 @@ function KPICard({ title, value, icon, trend, color }) {
   return (
     <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-800 rounded-2xl p-6 shadow-xl transition-all hover:border-gray-700 hover:shadow-2xl hover:-translate-y-1">
       <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-xl border ${theme}`}>
-          {icon}
-        </div>
+        <div className={`p-3 rounded-xl border ${theme}`}>{icon}</div>
         <div className="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded-lg">
-          <TrendingUp size={12} />
-          {trend}
+          <TrendingUp size={12} /> {trend}
         </div>
       </div>
       <div>
@@ -328,15 +355,10 @@ function ChartCard({ title, subtitle, children, action }) {
   return (
     <div className="bg-gray-900/40 backdrop-blur-xl border border-gray-800 rounded-2xl p-6 shadow-xl flex flex-col h-full">
       <div className="flex items-start justify-between mb-6">
-        <div>
-          <h2 className="text-lg font-bold text-white">{title}</h2>
-          <p className="text-xs text-gray-500">{subtitle}</p>
-        </div>
+        <div><h2 className="text-lg font-bold text-white">{title}</h2><p className="text-xs text-gray-500">{subtitle}</p></div>
         {action}
       </div>
-      <div className="flex-grow">
-        {children}
-      </div>
+      <div className="flex-grow">{children}</div>
     </div>
   );
 }
@@ -347,11 +369,7 @@ function CustomTooltip({ active, payload, isCurrency }) {
     return (
       <div className="bg-gray-950 border border-gray-700 p-3 rounded-xl shadow-2xl">
         <p className="text-xs text-gray-400 mb-1">{data.name}</p>
-        <p className="text-base font-bold text-white">
-          {isCurrency ? "₹" : ""}
-          {data.value.toLocaleString("en-IN")}
-          {!isCurrency && " Members"}
-        </p>
+        <p className="text-base font-bold text-white">{isCurrency ? "₹" : ""}{data.value.toLocaleString("en-IN")}{!isCurrency && " Members"}</p>
       </div>
     );
   }
