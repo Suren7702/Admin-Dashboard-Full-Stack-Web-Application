@@ -1,8 +1,13 @@
-// src/utils/api.js
+// client/src/utils/api.js
 import axios from "axios";
 
+// For Vite: value comes from .env (VITE_API_URL)
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "http://localhost:5000";
+
+// Final base URL (always ends with /api)
 const api = axios.create({
-  baseURL: "http://localhost:5000/api", // your Node backend URL
+  baseURL: `${API_BASE_URL}/api`,
 });
 
 api.interceptors.request.use((config) => {
