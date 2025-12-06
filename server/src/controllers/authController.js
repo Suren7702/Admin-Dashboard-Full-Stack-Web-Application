@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 
-// POST /api/auth/register  (used by Secret Register later)
+// POST /api/auth/register
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -70,5 +70,26 @@ export const loginUser = async (req, res) => {
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: "Server error during login" });
+  }
+};
+
+// ✅ ADD THIS FUNCTION AT THE BOTTOM
+// POST /api/auth/verify-secret
+export const verifySecret = (req, res) => {
+  try {
+    const { secretKey } = req.body;
+
+    // Make sure this matches the variable name in your .env file
+    // If .env is missing, it falls back to the string on the right (for testing)
+    const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || "tvk_admin_secret_123";
+
+    if (secretKey === ADMIN_SECRET) {
+      return res.status(200).json({ valid: true, message: "Key Verified" });
+    } else {
+      return res.status(401).json({ valid: false, message: "Invalid Secret Key" });
+    }
+  } catch (error) {
+    console.error("Secret verification error:", error);
+    res.status(500).json({ message: "Server error verifying key" });
   }
 };
