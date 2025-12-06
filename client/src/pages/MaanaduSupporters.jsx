@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../layout/DashboardLayout.jsx";
 
+// ✅ Use env-based API URL (works for local + Vercel)
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 export default function MaanaduSupporters() {
   const [data, setData] = useState(null); // { totalContributors, totalAmount, members }
   const [loading, setLoading] = useState(true);
@@ -15,7 +18,7 @@ export default function MaanaduSupporters() {
         setLoading(true);
         setError("");
 
-        const res = await fetch("http://localhost:5000/api/members/maanadu", {
+        const res = await fetch(`${API_URL}/api/members/maanadu`, {
           headers: {
             Authorization: getToken() ? `Bearer ${getToken()}` : "",
           },
