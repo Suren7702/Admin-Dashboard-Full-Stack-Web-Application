@@ -176,7 +176,6 @@ export default function DashboardHome() {
                <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-400 to-yellow-600 text-black text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-bl-lg shadow-sm z-10">
                 District Leader
                 </div>
-
                {/* Image Container (Unchanged) */}
                 <div className="w-14 h-14 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
                   <img src={DtsecImg} alt="Dist Sec" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
