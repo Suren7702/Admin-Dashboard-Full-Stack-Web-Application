@@ -10,36 +10,63 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 // 🥇 Role Priority Helper (Updated Logic)
 // 🥇 Role Priority Helper (Corrected Logic)
+// 🥇 Role Priority Helper (Updated Logic)
+// 🥇 Role Priority Helper (Updated)
 const getRolePriority = (rawRole) => {
   const role = (rawRole || "").toLowerCase().trim();
   if (!role) return 999;
 
-  // 1. மாவட்ட செயலாளர் (Highest Priority)
+  // 1. மாவட்ட செயலாளர் (District Secretary)
   if (role.includes("district secretary") || role.includes("மாவட்ட செயலாளர்")) return 1;
 
-  if (role.includes("joint district secretary") || role.includes("இணை செயலாளர்")) return 2;
+  // 2. இணை செயலாளர் (Joint Secretary)
+  if (role.includes("joint secretary") || role.includes("இணை செயலாளர்")) return 2;
 
-  // 2. அமைப்பாளர் (Organizer) - (Avoid 'Joint'/'Deputy')
-  if ((role.includes("organizer") || role.includes("அமைப்பாளர்")) && !role.includes("இணை") && !role.includes("joint") && !role.includes("துணை") && !role.includes("deputy")) return 3;
+  // 3. துணை செயலாளர் 1 (Deputy Secretary 1)
+  if (role.includes("deputy secretary 1") || role.includes("துணை செயலாளர் 1")) return 3;
 
-  // 3. இணை அமைப்பாளர் (Joint Organizer)
-  if ((role.includes("joint organizer") || role.includes("இணை அமைப்பாளர்")) && !role.includes("ஒருங்கிணைப்பாளர்")) return 4;
+  // 4. துணை செயலாளர் 2 (Deputy Secretary 2)
+  if (role.includes("deputy secretary 2") || role.includes("துணை செயலாளர் 2")) return 4;
 
-  // 4. ஒருங்கிணைப்பாளர் (Coordinator) - (Avoid 'Joint'/'Deputy')
-  if ((role.includes("coordinator") || role.includes("ஒருங்கிணைப்பாளர்")) && !role.includes("இணை") && !role.includes("joint") && !role.includes("துணை") && !role.includes("deputy")) return 5;
+  // 5. பொருளாளர் (Treasurer)
+  if (role.includes("treasurer") || role.includes("பொருளாளர்")) return 5;
 
-  // 5. இணை ஒருங்கிணைப்பாளர் (Joint Coordinator)
-  if (role.includes("joint coordinator") || role.includes("இணை ஒருங்கிணைப்பாளர்")) return 6;
+  // --- 👇 புதிதாக சேர்க்கப்பட்டவை (New Additions) 👇 ---
 
-  // 6. துணை அமைப்பாளர் / துணை ஒருங்கிணைப்பாளர் (Deputy Roles)
-  if (role.includes("deputy") || role.includes("துணை")) return 7;
+  // 6. அமைப்பாளர் (Organizer) - (Excluding Joint/Deputy)
+  if ((role.includes("organizer") || role.includes("அமைப்பாளர்")) && 
+      !role.includes("joint") && !role.includes("இணை") && 
+      !role.includes("deputy") && !role.includes("துணை")) return 6;
 
-  // 7. ஒன்றிய / நகர / பகுதி பொறுப்புகள் (Other Levels)
-  if (role.includes("union") || role.includes("ஒன்றிய")) return 8;
-  if (role.includes("town") || role.includes("city") || role.includes("நகர")) return 9;
-  if (role.includes("area") || role.includes("ward") || role.includes("வட்ட") || role.includes("பகுதி")) return 10;
-  
-  // 99. உறுப்பினர் (Member)
+  // 7. இணை அமைப்பாளர் (Joint Organizer)
+  if (role.includes("joint organizer") || role.includes("இணை அமைப்பாளர்")) return 7;
+
+  // 8. ஒருங்கிணைப்பாளர் (Coordinator) - (Excluding Joint/Deputy)
+  if ((role.includes("coordinator") || role.includes("ஒருங்கிணைப்பாளர்")) && 
+      !role.includes("joint") && !role.includes("இணை") && 
+      !role.includes("deputy") && !role.includes("துணை")) return 8;
+
+  // 9. இணை ஒருங்கிணைப்பாளர் (Joint Coordinator)
+  if (role.includes("joint coordinator") || role.includes("இணை ஒருங்கிணைப்பாளர்")) return 9;
+
+  // --- 👇 செயற்குழு உறுப்பினர்கள் கீழே இறக்கப்பட்டுள்ளன 👇 ---
+
+  // 10. செயற்குழு உறுப்பினர் 1
+  if (role.includes("executive member 1") || role.includes("செயற்குழு உறுப்பினர் 1")) return 10;
+
+  // 11. செயற்குழு உறுப்பினர் 2
+  if (role.includes("executive member 2") || role.includes("செயற்குழு உறுப்பினர் 2")) return 11;
+
+  // 12. செயற்குழு உறுப்பினர் 3
+  if (role.includes("executive member 3") || role.includes("செயற்குழு உறுப்பினர் 3")) return 12;
+
+  // 13. செயற்குழு உறுப்பினர் 4
+  if (role.includes("executive member 4") || role.includes("செயற்குழு உறுப்பினர் 4")) return 13;
+
+  // 14. செயற்குழு உறுப்பினர் 5
+  if (role.includes("executive member 5") || role.includes("செயற்குழு உறுப்பினர் 5")) return 14;
+
+  // 99. உறுப்பினர்
   if (role.includes("member") || role.includes("உறுப்பினர்")) return 99;
 
   return 100; // Others
