@@ -12,6 +12,7 @@ import Approvals from "./pages/dashboard/Approvals.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import MaanaduSupporters from "./pages/MaanaduSupporters.jsx";
+import KizhaiKazhagam from "./pages/KizhaiKazhagam"; 
 
 export default function App() {
   const isAuthenticated = !!localStorage.getItem("token");
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardHome />} />
           <Route path="/dashboard/members" element={<Members />} />
           <Route path="/dashboard/volunteers" element={<Volunteers />} />
+           <Route path="/dashboard/kizhai" element={<KizhaiKazhagam />} />
           <Route path="/dashboard/approvals" element={<Approvals />} />
           <Route
             path="/dashboard/maanadu-supporters"   // 🔥 fixed path

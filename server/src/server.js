@@ -1,28 +1,33 @@
-// server/src/server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-
-// if config/db.js is also inside src/config
 import connectDB from "./config/db.js";
 
-// ✅ NOTE: we are already inside src/, so use "./routes/...", NOT "./src/routes/..."
+// Routes Imports
 import authRoutes from "./routes/authRoutes.js";
 import memberRoutes from "./routes/memberRoutes.js";
+import kizhaiRoutes from "./routes/kizhaiRoutes.js";// ✅ New Route
 
+// Middleware Imports
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 dotenv.config();
-const app = express();
-
 connectDB();
 
+const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Routes Configuration
 app.use("/api/auth", authRoutes);
 app.use("/api/members", memberRoutes);
 
+// ✅ இங்கே "/api/kizhais" என்று சொன்னால்...
+app.use("/api/kizhais", kizhaiRoutes); 
+
+// Error Handling
 app.use(notFound);
 app.use(errorHandler);
 

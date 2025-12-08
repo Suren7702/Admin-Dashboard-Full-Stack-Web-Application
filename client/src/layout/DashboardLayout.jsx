@@ -1,6 +1,6 @@
 // src/layout/DashboardLayout.jsx
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { 
   LayoutDashboard, 
   Users, 
@@ -12,7 +12,10 @@ import {
   X, 
   Search, 
   Bell, 
-  ChevronDown 
+  ChevronRight,
+  Maximize,
+  Minimize,
+  MapPin //
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
@@ -20,11 +23,40 @@ export default function DashboardLayout({ children }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Fullscreen toggle logic
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullScreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullScreen(false);
+      }
+    }
+  };
+
+  // Dummy Notifications (Replace with API data later)
+  const notifications = [
+    { id: 1, text: "New member registration in Trichy", time: "2 min ago", unread: true },
+    { id: 2, text: "Volunteer approval pending", time: "1 hour ago", unread: false },
+    { id: 3, text: "Maanadu list updated", time: "Yesterday", unread: false },
+  ];
 
   // User Auth Logic
   const user = (() => {
     try {
-      return JSON.parse(localStorage.getItem("user")) || { name: "Admin", role: "Organizer" };
+      return JSON.parse(localStorage.getItem("user")) || { name: "Admin", role: "District Secretary" };
     } catch {
       return null;
     }
@@ -36,13 +68,20 @@ export default function DashboardLayout({ children }) {
     navigate("/login");
   };
 
-  const navItems = [
+const navItems = [
     { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
+    
+    // 👇 புதுசா சேர்த்த லைன் இதுதான் (New Line Here) 👇
+    { label: "Kizhai Kazhagam", path: "/dashboard/kizhai", icon: <MapPin size={20} /> },
+    
     { label: "Members", path: "/dashboard/members", icon: <Users size={20} /> },
     { label: "Volunteers", path: "/dashboard/volunteers", icon: <Hand size={20} /> },
     { label: "Approvals", path: "/dashboard/approvals", icon: <CheckCircle size={20} /> },
     { label: "Maanadu Supporters", path: "/dashboard/maanadu-supporters", icon: <Heart size={20} /> },
   ];
+
+  // Breadcrumb Logic
+  const pathnames = location.pathname.split("/").filter((x) => x);
 
   return (
     <div className="flex h-screen bg-[#0f1115] text-gray-100 font-sans overflow-hidden">
@@ -124,7 +163,7 @@ export default function DashboardLayout({ children }) {
         {/* Top Header */}
         <header className="h-16 z-30 flex items-center justify-between px-6 border-b border-gray-800 bg-[#0f1115]/80 backdrop-blur-md sticky top-0 shadow-sm">
           
-          {/* Left: Mobile Toggle */}
+          {/* Left: Mobile Toggle & Breadcrumbs */}
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(true)}
@@ -132,26 +171,77 @@ export default function DashboardLayout({ children }) {
             >
               <Menu size={20} />
             </button>
+            
+            {/* New Feature: Breadcrumbs */}
+            <nav className="hidden md:flex items-center text-sm text-gray-500">
+               <span className="hover:text-gray-300 cursor-pointer">App</span>
+               {pathnames.map((value, index) => {
+                 const to = `/${pathnames.slice(0, index + 1).join("/")}`;
+                 return (
+                   <span key={to} className="flex items-center">
+                     <ChevronRight size={14} className="mx-1" />
+                     <Link to={to} className="capitalize hover:text-yellow-500 transition-colors">
+                       {value.replace("-", " ")}
+                     </Link>
+                   </span>
+                 );
+               })}
+            </nav>
           </div>
 
-          {/* ⭐ CENTER TITLE: BOLD & WHITE ⭐ */}
-          <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-             <h1 className="text-xl md:text-2xl font-black font-tamil tracking-wide whitespace-nowrap text-white drop-shadow-md">
-                தமிழக வெற்றிக் கழகம்
+          {/* Center Title (Hidden on small mobile to fit search/profile) */}
+          <div className="hidden lg:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+             <h1 className="text-xl font-black font-tamil tracking-wide whitespace-nowrap text-white drop-shadow-md">
+               தமிழக வெற்றிக் கழகம்
              </h1>
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-5">
             
-            {/* Search Bar */}
-            <div className="hidden lg:flex items-center bg-[#1a1d24] border border-gray-700 rounded-full px-4 py-1.5 w-64 focus-within:border-gray-500 focus-within:ring-1 focus-within:ring-gray-500 transition-all">
-              <Search size={16} className="text-gray-500" />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="bg-transparent border-none outline-none text-sm text-gray-200 placeholder-gray-500 ml-2 w-full"
-              />
+            {/* New Feature: Time Display */}
+            <div className="hidden xl:block text-xs font-mono text-gray-500 mr-2">
+               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+
+            {/* New Feature: Full Screen */}
+            <button 
+              onClick={toggleFullScreen} 
+              className="hidden md:block text-gray-400 hover:text-white transition-colors"
+              title="Toggle Fullscreen"
+            >
+              {isFullScreen ? <Minimize size={18} /> : <Maximize size={18} />}
+            </button>
+
+            {/* New Feature: Notifications */}
+            <div className="relative">
+              <button 
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative text-gray-400 hover:text-white transition-colors p-1"
+              >
+                <Bell size={20} />
+                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500 border border-[#0f1115]"></span>
+              </button>
+
+              {notifOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)}></div>
+                  <div className="absolute right-0 mt-3 w-72 bg-[#1a1d24] border border-gray-700 rounded-xl shadow-2xl z-20 py-2 animate-in fade-in slide-in-from-top-2">
+                    <div className="px-4 py-2 border-b border-gray-700 flex justify-between items-center">
+                      <h3 className="text-sm font-semibold text-white">Notifications</h3>
+                      <span className="text-[10px] text-yellow-500 cursor-pointer">Mark all read</span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {notifications.map((n) => (
+                        <div key={n.id} className="px-4 py-3 hover:bg-gray-800/50 cursor-pointer border-b border-gray-800 last:border-0">
+                          <p className="text-xs text-gray-300 font-medium">{n.text}</p>
+                          <p className="text-[10px] text-gray-500 mt-1">{n.time}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Profile Dropdown */}
@@ -170,9 +260,12 @@ export default function DashboardLayout({ children }) {
                   <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)}></div>
                   <div className="absolute right-0 mt-3 w-48 bg-[#1a1d24] border border-gray-700 rounded-xl shadow-2xl z-20 py-1 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-3 border-b border-gray-700">
-                       <p className="text-sm text-white font-medium">{user?.name}</p>
-                       <p className="text-xs text-gray-500">{user?.role}</p>
+                        <p className="text-sm text-white font-medium">{user?.name}</p>
+                        <p className="text-xs text-gray-500">{user?.role}</p>
                     </div>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors">
+                      Profile Settings
+                    </button>
                     <button 
                       onClick={handleLogout} 
                       className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 transition-colors"
@@ -190,6 +283,12 @@ export default function DashboardLayout({ children }) {
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth custom-scrollbar">
           <div className="max-w-7xl mx-auto">
+             {/* Simple Page Header could go here */}
+             <div className="mb-6 md:flex md:items-center md:justify-between">
+                <h2 className="text-2xl font-bold text-white capitalize">
+                  {location.pathname.split("/").pop().replace("-", " ") || "Dashboard"}
+                </h2>
+             </div>
              {children}
           </div>
         </main>
