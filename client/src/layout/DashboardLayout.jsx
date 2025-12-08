@@ -17,6 +17,7 @@ import {
   Minimize,
   MapPin //
 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
   const navigate = useNavigate();
@@ -99,22 +100,32 @@ const navItems = [
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Sidebar Brand Header */}
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-800 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-700 via-yellow-500 to-red-700"></div>
-          
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-700 to-red-900 flex items-center justify-center border border-yellow-500/30 shadow-lg shadow-red-900/20">
-            <span className="font-black text-yellow-400 text-xs tracking-tighter">TVK</span>
-          </div>
-          <div>
-            <h1 className="font-bold text-gray-100 tracking-wide text-sm">TVK Admin</h1>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wider">Tiruchirappalli</p>
-          </div>
-          
-          <button onClick={() => setSidebarOpen(false)} className="md:hidden ml-auto text-gray-400">
-            <X size={20} />
-          </button>
-        </div>
+       {/* ... inside sidebar ... */}
+<div className="h-16 flex items-center gap-3 px-6 border-b border-gray-800 relative overflow-hidden bg-gradient-to-r from-red-900/10 to-transparent">
+  {/* Top Line */}
+  <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></div>
+  
+  {/* Logo with Glow */}
+  <div className="relative group cursor-pointer">
+    <div className="absolute inset-0 bg-yellow-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+    <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-red-800 to-black flex items-center justify-center border border-yellow-500/40 shadow-xl">
+      <span className="font-black text-yellow-400 text-xs tracking-tighter">TVK</span>
+    </div>
+  </div>
+
+  {/* Text with Dropdown Icon */}
+  <div className="flex-1 cursor-pointer group">
+    <h1 className="font-bold text-gray-100 tracking-wide text-sm group-hover:text-yellow-400 transition-colors">ADMIN</h1>
+    <div className="flex items-center gap-1">
+      <p className="text-[10px] text-gray-400 uppercase tracking-wider group-hover:text-gray-200">திருச்சி மேற்கு மாவட்டம் </p>
+      <ChevronDown size={10} className="text-gray-500 group-hover:text-yellow-500 transition-colors" />
+    </div>
+  </div>
+  
+  <button onClick={() => setSidebarOpen(false)} className="md:hidden ml-auto text-gray-400">
+    <X size={20} />
+  </button>
+</div>
 
         {/* Navigation Links */}
         <div className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-120px)]">

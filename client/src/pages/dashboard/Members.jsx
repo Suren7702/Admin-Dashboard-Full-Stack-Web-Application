@@ -2,29 +2,52 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../layout/DashboardLayout.jsx";
 import { 
-  Search, Filter, Plus, User, Phone, Users, Heart, Save, 
+  Search, Filter, Plus, Phone, Users, Heart, 
   Trash2, Edit, X, Shield, Droplet, Crown, ChevronDown, ChevronUp, Briefcase
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// 🥇 Role Priority Helper
+// 🥇 Role Priority Helper (Updated Logic)
+// 🥇 Role Priority Helper (Corrected Logic)
 const getRolePriority = (rawRole) => {
   const role = (rawRole || "").toLowerCase().trim();
   if (!role) return 999;
-  if (role.includes("district secretary") || (role.includes("மாவட்ட") && role.includes("செயலாளர்"))) return 1;
-  if (role.includes("union secretary") || (role.includes("ஒன்றிய") && role.includes("செயலாளர்"))) return 2;
-  if (role.includes("town secretary") || role.includes("city secretary") || (role.includes("நகர") && role.includes("செயலாளர்"))) return 3;
-  if (role.includes("area secretary") || role.includes("ward secretary") || (role.includes("வட்ட") && role.includes("செயலாளர்")) || (role.includes("ஊராட்சி") && role.includes("செயலாளர்"))) return 4;
-  if (role.includes("coordinator") || role.includes("incharge") || role.includes("in-charge") || role.includes("இணை ஒருங்கிணைப்பாளர்") || role.includes("ஒருங்கிணைப்பாளர்")) return 5;
-  if (role.includes("executive") || role.includes("committee") || role.includes("worker") || role.includes("செயலர்") || role.includes("துணை செயலாளர்")) return 6;
-  if (role.includes("member") || role.includes("உறுப்பினர்")) return 7;
-  return 900;
+
+  // 1. மாவட்ட செயலாளர் (Highest Priority)
+  if (role.includes("district secretary") || role.includes("மாவட்ட செயலாளர்")) return 1;
+
+  if (role.includes("joint district secretary") || role.includes("இணை செயலாளர்")) return 2;
+
+  // 2. அமைப்பாளர் (Organizer) - (Avoid 'Joint'/'Deputy')
+  if ((role.includes("organizer") || role.includes("அமைப்பாளர்")) && !role.includes("இணை") && !role.includes("joint") && !role.includes("துணை") && !role.includes("deputy")) return 3;
+
+  // 3. இணை அமைப்பாளர் (Joint Organizer)
+  if ((role.includes("joint organizer") || role.includes("இணை அமைப்பாளர்")) && !role.includes("ஒருங்கிணைப்பாளர்")) return 4;
+
+  // 4. ஒருங்கிணைப்பாளர் (Coordinator) - (Avoid 'Joint'/'Deputy')
+  if ((role.includes("coordinator") || role.includes("ஒருங்கிணைப்பாளர்")) && !role.includes("இணை") && !role.includes("joint") && !role.includes("துணை") && !role.includes("deputy")) return 5;
+
+  // 5. இணை ஒருங்கிணைப்பாளர் (Joint Coordinator)
+  if (role.includes("joint coordinator") || role.includes("இணை ஒருங்கிணைப்பாளர்")) return 6;
+
+  // 6. துணை அமைப்பாளர் / துணை ஒருங்கிணைப்பாளர் (Deputy Roles)
+  if (role.includes("deputy") || role.includes("துணை")) return 7;
+
+  // 7. ஒன்றிய / நகர / பகுதி பொறுப்புகள் (Other Levels)
+  if (role.includes("union") || role.includes("ஒன்றிய")) return 8;
+  if (role.includes("town") || role.includes("city") || role.includes("நகர")) return 9;
+  if (role.includes("area") || role.includes("ward") || role.includes("வட்ட") || role.includes("பகுதி")) return 10;
+  
+  // 99. உறுப்பினர் (Member)
+  if (role.includes("member") || role.includes("உறுப்பினர்")) return 99;
+
+  return 100; // Others
 };
 
 const isDistrictSec = (rawRole) => {
   const role = (rawRole || "").toLowerCase().trim();
-  return role.includes("district secretary") || (role.includes("மாவட்ட") && role.includes("செயலாளர்"));
+  return role.includes("district secretary") || role.includes("மாவட்ட செயலாளர்");
 };
 
 export default function Members() {
@@ -59,11 +82,16 @@ export default function Members() {
       if (!res.ok) throw new Error(data.message || "Failed to load members");
       
       let list = Array.isArray(data) ? data : (data.members || []);
+      
+      // ✅ SORTING LOGIC APPLIED HERE
       list.sort((a, b) => {
-        const pa = getRolePriority(a.role); const pb = getRolePriority(b.role);
-        if (pa !== pb) return pa - pb;
-        return (a.name || "").localeCompare(b.name || "", "ta-IN");
+        const pa = getRolePriority(a.role); 
+        const pb = getRolePriority(b.role);
+        
+        if (pa !== pb) return pa - pb; // Sort by Role Priority first
+        return (a.name || "").localeCompare(b.name || "", "ta-IN"); // Then by Name (Tamil Alphabetical)
       });
+
       setMembers(list);
     } catch (err) { console.error("Error:", err); setMembers([]); } finally { setLoading(false); }
   };
@@ -88,7 +116,10 @@ export default function Members() {
     const memberTeam = (m.teamName || m.team || "").toLowerCase();
     if (teamFilter !== "all" && memberTeam !== teamFilter.toLowerCase()) return false;
     if (!q) return true;
-    const name = (m.name || "").toLowerCase(); const phone = (m.phone || "").toLowerCase(); const role = (m.role || "").toLowerCase(); const team = memberTeam;
+    const name = (m.name || "").toLowerCase(); 
+    const phone = (m.phone || "").toLowerCase(); 
+    const role = (m.role || "").toLowerCase(); 
+    const team = memberTeam;
     return name.includes(q) || phone.includes(q) || role.includes(q) || team.includes(q);
   });
 
@@ -111,10 +142,26 @@ export default function Members() {
 
       if (isEdit) {
         setFormSuccess("Member updated successfully ✅");
-        setMembers((prev) => { const updatedList = prev.map((m) => (m._id === data._id ? data : m)); return updatedList.sort((a, b) => getRolePriority(a.role) - getRolePriority(b.role)); });
+        // Re-sort immediately after update
+        setMembers((prev) => { 
+            const updatedList = prev.map((m) => (m._id === data._id ? data : m)); 
+            return updatedList.sort((a, b) => {
+                const pa = getRolePriority(a.role); const pb = getRolePriority(b.role);
+                if (pa !== pb) return pa - pb;
+                return (a.name || "").localeCompare(b.name || "", "ta-IN");
+            }); 
+        });
       } else {
         setFormSuccess("Member added successfully ✅");
-        setMembers((prev) => { const newList = [data, ...prev]; return newList.sort((a, b) => getRolePriority(a.role) - getRolePriority(b.role)); });
+        // Re-sort immediately after add
+        setMembers((prev) => { 
+            const newList = [data, ...prev]; 
+            return newList.sort((a, b) => {
+                const pa = getRolePriority(a.role); const pb = getRolePriority(b.role);
+                if (pa !== pb) return pa - pb;
+                return (a.name || "").localeCompare(b.name || "", "ta-IN");
+            }); 
+        });
       }
       
       if(isEdit) { setEditingId(null); setShowForm(false); setForm({ teamName: "", name: "", role: "", phone: "", community: "", bloodGroup: "", maanaduEnabled: false, maanaduEventName: "", maanaduVehicleType: "", maanaduAmount: "", maanaduDate: "", maanaduNotes: "" }); } else { setForm(prev => ({...prev, name: "", role: "", phone: "", community: "", bloodGroup: "", maanaduEnabled: false, maanaduAmount: ""})); }
@@ -200,101 +247,101 @@ export default function Members() {
         {/* MEMBERS LIST */}
         {loading ? (
            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {[1,2,3,4,5,6].map(i => <div key={i} className="h-24 bg-gray-900/50 rounded-2xl animate-pulse border border-gray-800"></div>)}
+             {[1,2,3,4,5,6].map(i => <div key={i} className="h-24 bg-gray-900/50 rounded-2xl animate-pulse border border-gray-800"></div>)}
            </div>
         ) : (
            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredMembers.map((m) => {
-                 const maanadu = m.maanaduSupport || {};
-                 const isSupporter = !!maanadu.enabled;
-                 const isGold = isDistrictSec(m.role);
-                 const isExpanded = expandedId === m._id;
+             {filteredMembers.map((m) => {
+                const maanadu = m.maanaduSupport || {};
+                const isSupporter = !!maanadu.enabled;
+                const isGold = isDistrictSec(m.role);
+                const isExpanded = expandedId === m._id;
 
-                 return (
-                    <div 
-                      key={m._id} 
-                      onClick={() => toggleExpand(m._id)}
-                      className={`relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${
-                         isGold 
-                           ? 'bg-gradient-to-br from-yellow-900/20 to-black border-yellow-500/50 shadow-yellow-900/20' 
-                           : 'bg-gray-900/60 border-gray-800 hover:border-gray-600 hover:shadow-lg'
-                      } ${isExpanded ? 'row-span-2' : ''}`}
-                    >
-                       {/* Gold Badge */}
-                       {isGold && (
-                          <div className="absolute top-0 right-0 bg-yellow-500 text-black text-[9px] font-black px-2 py-0.5 rounded-bl-lg z-10 flex items-center gap-1">
-                             <Crown size={10} fill="black"/> LEADER
-                          </div>
-                       )}
+                return (
+                   <div 
+                     key={m._id} 
+                     onClick={() => toggleExpand(m._id)}
+                     className={`relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${
+                        isGold 
+                          ? 'bg-gradient-to-br from-yellow-900/20 to-black border-yellow-500/50 shadow-yellow-900/20' 
+                          : 'bg-gray-900/60 border-gray-800 hover:border-gray-600 hover:shadow-lg'
+                     } ${isExpanded ? 'row-span-2' : ''}`}
+                   >
+                      {/* Gold Badge */}
+                      {isGold && (
+                        <div className="absolute top-0 right-0 bg-yellow-500 text-black text-[9px] font-black px-2 py-0.5 rounded-bl-lg z-10 flex items-center gap-1">
+                           <Crown size={10} fill="black"/> LEADER
+                        </div>
+                      )}
 
-                       {/* DEFAULT VIEW: Name, Team, Role */}
-                       <div className="p-5 flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                             {/* Avatar */}
-                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold border-2 shrink-0 ${
-                                isGold ? 'bg-yellow-500 text-black border-yellow-300' : 'bg-gray-800 border-gray-700 text-gray-400'
-                             }`}>
-                                {m.name.charAt(0).toUpperCase()}
-                             </div>
-                             
-                             {/* Name & Team */}
-                             <div>
-                                <h3 className={`font-bold text-lg leading-tight ${isGold ? 'text-yellow-400' : 'text-gray-100'}`}>{m.name}</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">{m.teamName || "No Team"}</p>
-                             </div>
-                          </div>
+                      {/* DEFAULT VIEW: Name, Team, Role */}
+                      <div className="p-5 flex items-center justify-between">
+                         <div className="flex items-center gap-4">
+                            {/* Avatar */}
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold border-2 shrink-0 ${
+                               isGold ? 'bg-yellow-500 text-black border-yellow-300' : 'bg-gray-800 border-gray-700 text-gray-400'
+                            }`}>
+                               {m.name.charAt(0).toUpperCase()}
+                            </div>
+                            
+                            {/* Name & Team */}
+                            <div>
+                               <h3 className={`font-bold text-lg leading-tight ${isGold ? 'text-yellow-400' : 'text-gray-100'}`}>{m.name}</h3>
+                               <p className="text-xs text-gray-500 mt-0.5">{m.teamName || "No Team"}</p>
+                            </div>
+                         </div>
 
-                          {/* Role Badge + Chevron */}
-                          <div className="flex flex-col items-end gap-1">
-                             <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium border uppercase tracking-wider ${
-                                isGold 
-                                  ? 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' 
-                                  : 'bg-blue-500/10 text-blue-300 border-blue-500/20'
-                             }`}>
-                                {m.role || "Member"}
-                             </span>
-                             <div className="text-gray-600 mt-1">
-                                {isExpanded ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
-                             </div>
-                          </div>
-                       </div>
+                         {/* Role Badge + Chevron */}
+                         <div className="flex flex-col items-end gap-1">
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium border uppercase tracking-wider ${
+                               isGold 
+                                 ? 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' 
+                                 : 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                            }`}>
+                               {m.role || "Member"}
+                            </span>
+                            <div className="text-gray-600 mt-1">
+                               {isExpanded ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
+                            </div>
+                         </div>
+                      </div>
 
-                       {/* EXPANDED DETAILS (Hidden until click) */}
-                       <div className={`transition-all duration-300 ease-in-out overflow-hidden bg-black/20 ${isExpanded ? 'max-h-[500px] opacity-100 border-t border-gray-800/50' : 'max-h-0 opacity-0'}`}>
-                          <div className="px-5 pb-5 pt-4">
-                             
-                             {/* Details Grid */}
-                             <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-sm">
-                                <div className="flex items-center gap-2 text-gray-400"><Phone size={14} className="text-blue-400"/><span className="text-gray-200">{m.phone}</span></div>
-                                <div className="flex items-center gap-2 text-gray-400"><Users size={14} className="text-purple-400"/><span className="text-gray-200 truncate">{m.community || "-"}</span></div>
-                                <div className="flex items-center gap-2 text-gray-400"><Droplet size={14} className="text-red-500"/><span className="text-gray-200 font-bold">{m.bloodGroup || "-"}</span></div>
-                                <div className="flex items-center gap-2 text-gray-400"><Briefcase size={14} className="text-gray-500"/><span className="text-gray-200">{m.role || "-"}</span></div>
-                             </div>
+                      {/* EXPANDED DETAILS (Hidden until click) */}
+                      <div className={`transition-all duration-300 ease-in-out overflow-hidden bg-black/20 ${isExpanded ? 'max-h-[500px] opacity-100 border-t border-gray-800/50' : 'max-h-0 opacity-0'}`}>
+                         <div className="px-5 pb-5 pt-4">
+                            
+                            {/* Details Grid */}
+                            <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-sm">
+                               <div className="flex items-center gap-2 text-gray-400"><Phone size={14} className="text-blue-400"/><span className="text-gray-200">{m.phone}</span></div>
+                               <div className="flex items-center gap-2 text-gray-400"><Users size={14} className="text-purple-400"/><span className="text-gray-200 truncate">{m.community || "-"}</span></div>
+                               <div className="flex items-center gap-2 text-gray-400"><Droplet size={14} className="text-red-500"/><span className="text-gray-200 font-bold">{m.bloodGroup || "-"}</span></div>
+                               <div className="flex items-center gap-2 text-gray-400"><Briefcase size={14} className="text-gray-500"/><span className="text-gray-200">{m.role || "-"}</span></div>
+                            </div>
 
-                             {/* Maanadu Info */}
-                             {isSupporter && (
-                                <div className="mt-4 bg-emerald-900/10 border border-emerald-500/20 rounded-xl p-3">
-                                   <div className="flex items-center justify-between mb-2">
-                                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1"><Heart size={12} fill="currentColor"/> Maanadu Support</span>
-                                      <span className="text-sm font-bold text-white">₹{maanadu.amountSpent?.toLocaleString()}</span>
-                                   </div>
-                                   <div className="text-xs text-gray-400 grid grid-cols-2 gap-2">
-                                      <span>Vehicle: <span className="text-gray-300">{maanadu.vehicleType || "None"}</span></span>
-                                      <span>Date: <span className="text-gray-300">{maanadu.date ? new Date(maanadu.date).toLocaleDateString() : "-"}</span></span>
-                                   </div>
-                                </div>
-                             )}
+                            {/* Maanadu Info */}
+                            {isSupporter && (
+                               <div className="mt-4 bg-emerald-900/10 border border-emerald-500/20 rounded-xl p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                     <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1"><Heart size={12} fill="currentColor"/> Maanadu Support</span>
+                                     <span className="text-sm font-bold text-white">₹{maanadu.amountSpent?.toLocaleString()}</span>
+                                  </div>
+                                  <div className="text-xs text-gray-400 grid grid-cols-2 gap-2">
+                                     <span>Vehicle: <span className="text-gray-300">{maanadu.vehicleType || "None"}</span></span>
+                                     <span>Date: <span className="text-gray-300">{maanadu.date ? new Date(maanadu.date).toLocaleDateString() : "-"}</span></span>
+                                  </div>
+                               </div>
+                            )}
 
-                             {/* Action Buttons */}
-                             <div className="flex justify-end gap-3 mt-5 pt-4 border-t border-gray-800/50">
-                                <button onClick={(e) => startEdit(m, e)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors text-xs font-medium"><Edit size={14} /> Edit</button>
-                                <button onClick={(e) => deleteMember(m._id, e)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-colors text-xs font-medium"><Trash2 size={14} /> Delete</button>
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-                 );
-              })}
+                            {/* Action Buttons */}
+                            <div className="flex justify-end gap-3 mt-5 pt-4 border-t border-gray-800/50">
+                               <button onClick={(e) => startEdit(m, e)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors text-xs font-medium"><Edit size={14} /> Edit</button>
+                               <button onClick={(e) => deleteMember(m._id, e)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-colors text-xs font-medium"><Trash2 size={14} /> Delete</button>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                );
+             })}
            </div>
         )}
       </div>
