@@ -73,12 +73,12 @@ export default function DashboardLayout({ children }) {
   const navItems = [
     { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
 
-    // 👉 இங்கே தான் நம்ம Booth Map / Kizhai Kazhagam entry
-    { label: "Kizhai Kazhagam (Booth Map)", path: "/dashboard/kizhai", icon: <MapPin size={20} /> },
-    { label: "Add Booth", path: "/dashboard/booths/add", icon: <MapPin size={20} /> },
-    { label: "Members", path: "/dashboard/members", icon: <Users size={20} /> },
-    { label: "Volunteers", path: "/dashboard/volunteers", icon: <Hand size={20} /> },
-    { label: "Approvals", path: "/dashboard/approvals", icon: <CheckCircle size={20} /> },
+    // 👉 இங்Kazhagamகே தான் நம்ம Booth Map / Kizhai Kazhagam entry
+    { label: "கிளைகள்", path: "/dashboard/kizhai", icon: <MapPin size={20} /> },
+    { label: "பூத்", path: "/dashboard/booths/add", icon: <MapPin size={20} /> },
+    { label: "நிர்வாகிகள்", path: "/dashboard/members", icon: <Users size={20} /> },
+    { label: "தொண்டர்கள்", path: "/dashboard/volunteers", icon: <Hand size={20} /> },
+    { label: "ஒப்புதல்", path: "/dashboard/approvals", icon: <CheckCircle size={20} /> },
     { label: "Maanadu Supporters", path: "/dashboard/maanadu-supporters", icon: <Heart size={20} /> },
   ];
 
