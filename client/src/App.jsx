@@ -15,6 +15,8 @@ import MaanaduSupporters from "./pages/MaanaduSupporters.jsx";
 import KizhaiKazhagam from "./pages/KizhaiKazhagam"; 
 import BoothMap from "./pages/BoothMap";
 import AddBooth from "./pages/dashboard/AddBooth";
+import PublicKizhaiForm from "./pages/PublicKizhaiForm.jsx";
+
 
 export default function App() {
   const isAuthenticated = !!localStorage.getItem("token");
@@ -39,6 +41,7 @@ export default function App() {
            <Route path="/dashboard/kizhai" element={<KizhaiKazhagam />} />
           <Route path="/dashboard/approvals" element={<Approvals />} />
           <Route path="/dashboard/booths/add" element={<AddBooth />} />
+          <Route path="/kizhai-form" element={<PublicKizhaiForm />} />
           <Route
             path="/dashboard/maanadu-supporters"   // 🔥 fixed path
             element={<MaanaduSupporters />}
