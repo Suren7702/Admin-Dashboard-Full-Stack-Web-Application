@@ -13,33 +13,24 @@ router.post("/public", async (req, res) => {
   try {
     const {
       name,
+      ward,
       area,
-      village,
-      taluk,
-      district,
+      secretaryName,
+      phone,
       memberCount,
       targetCount,
-      presidentName,
-      contactNumber,
     } = req.body;
 
-    // Basic validation
-    if (!name || !area || !village || !taluk || !district) {
-      return res.status(400).json({
-        message: "Name, area, village, taluk, district are required.",
-      });
-    }
+    // ❌ old manual validation (village/taluk/district) removed
 
     const newKizhai = await Kizhai.create({
       name,
+      ward,
       area,
-      village,
-      taluk,
-      district,
+      secretaryName,
+      phone,
       memberCount: Number(memberCount) || 0,
       targetCount: Number(targetCount) || 0,
-      presidentName,
-      contactNumber,
       source: "public-form", // optional tracking
     });
 
