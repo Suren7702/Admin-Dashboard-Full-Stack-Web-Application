@@ -35,12 +35,7 @@ import DtsecImg from "../../assets/images/dtsc.jpg";
 import leninImg from "../../assets/images/lenin.jpg";
 
 // ✅ Map Card
-// OLD
-// import BoothMapCard from "../components/BoothMapCard";
-
-// NEW ✅ (from src/pages/dashboard → src/components)
 import BoothMapCard from "../../components/BoothMapCard";
-
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -81,7 +76,6 @@ export default function DashboardHome() {
           Authorization: getToken() ? `Bearer ${getToken()}` : "",
         };
 
-        // ✅ Updated to fetch Kizhais as well
         const [statsRes, maanaduRes, kizhaiRes] = await Promise.all([
           fetch(`${API_URL}/api/members/stats`, { headers }),
           fetch(`${API_URL}/api/members/maanadu`, { headers }),
@@ -149,10 +143,10 @@ export default function DashboardHome() {
 
   // ✅ KIZHAI ANALYTICS LOGIC
   const totalKizhaiCount = kizhais.length;
-  // Sort by performance and take top 7 for the graph
+
   const kizhaiGraphData = kizhais
     .map((k) => ({
-      name: k.name.replace("Kizhai", "").trim(), // Shorten name for graph
+      name: k.name.replace("Kizhai", "").trim(),
       members: k.memberCount || 0,
       target: k.targetCount || 100,
       percentage: Math.round(
@@ -162,7 +156,6 @@ export default function DashboardHome() {
     .sort((a, b) => b.percentage - a.percentage)
     .slice(0, 7);
 
-  // Overall Target Calculation
   const overallTarget = kizhais.reduce(
     (acc, k) => acc + (k.targetCount || 0),
     0
@@ -205,123 +198,118 @@ export default function DashboardHome() {
       <div
         className={`min-h-screen text-gray-100 transform transition-all duration-700 ease-out ${
           mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-        }`}>
+        }`}
+      >
         {/* ================= LEADERSHIP BANNER (4 CARDS) ================= */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-10 items-stretch">
-         {/* 1. GENERAL SECRETARY */}
-         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-10 items-stretch">
-  {/* 1. GENERAL SECRETARY */}
-  <div
-    className="
-      order-2 md:order-1 md:col-span-3 
-      bg-gradient-to-br from-gray-950 to-black 
-      border border-gray-800 rounded-2xl 
-      p-3 md:p-4 
-      flex items-center md:flex-col 
-      md:items-center md:justify-center 
-      text-left md:text-center
-      shadow-[0_12px_35px_rgba(0,0,0,0.6)] 
-      relative overflow-hidden group transition-all duration-300 
-      hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.9)] 
-      hover:border-amber-400/60
-    "
-  >
-    <div className="absolute -top-6 -right-10 w-24 h-24 bg-gradient-to-br from-amber-500/20 to-orange-600/10 rounded-full blur-2xl" />
+          {/* 1. GENERAL SECRETARY */}
+          <div
+            className="
+              order-2 md:order-1 md:col-span-3 
+              bg-gradient-to-br from-gray-950 to-black 
+              border border-gray-800 rounded-2xl 
+              p-3 md:p-4 
+              flex items-center md:flex-col 
+              md:items-center md:justify-center 
+              text-left md:text-center
+              shadow-[0_12px_35px_rgba(0,0,0,0.6)] 
+              relative overflow-hidden group transition-all duration-300 
+              hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.9)] 
+              hover:border-amber-400/60
+            "
+          >
+            <div className="absolute -top-6 -right-10 w-24 h-24 bg-gradient-to-br from-amber-500/20 to-orange-600/10 rounded-full blur-2xl" />
 
-    {/* ⭐ Photo size & layout like District Secretary in mobile */}
-    <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-2 border-gray-600 overflow-hidden shadow-md mb-0 md:mb-3 shrink-0">
-      <img
-        src={GensecImg}
-        alt="Gen Sec"
-        className="w-full h-full object-cover object-top grayscale group-hover:grayscale-0 transition-all duration-500"
-      />
-    </div>
+            {/* ⭐ Mobile: same size as District Secretary card */}
+            <div className="w-14 h-14 md:w-20 md:h-20 rounded-full border-2 border-gray-600 overflow-hidden shadow-md mb-0 md:mb-3 shrink-0">
+              <img
+                src={GensecImg}
+                alt="Gen Sec"
+                className="w-full h-full object-cover object-top grayscale group-hover:grayscale-0 transition-all duration-500"
+              />
+            </div>
 
-    <div className="ml-3 md:ml-0 min-w-0">
-      <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1 font-tamil">
-        பொதுச் செயலாளர்
-      </p>
-      <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate md:whitespace-normal">
-        திரு. புஸ்ஸி N. ஆனந்த்
-      </h3>
-      <p className="text-[9px] md:text-[10px] text-gray-500 mt-0.5 md:mt-1">
-        Ex. MLA
-      </p>
-    </div>
-  </div>
+            <div className="ml-3 md:ml-0 min-w-0">
+              <p className="text-[9px] md:text-[10px] text-gray-400 uppercase tracking-widest mb-0.5 md:mb-1 font-tamil">
+                பொதுச் செயலாளர்
+              </p>
+              <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate md:whitespace-normal">
+                திரு. புஸ்ஸி N. ஆனந்த்
+              </h3>
+              <p className="text-[9px] md:text-[10px] text-gray-500 mt-0.5 md:mt-1">
+                Ex. MLA
+              </p>
+            </div>
+          </div>
 
-  {/* 2. THALAIVAR */}
-  <div className="order-1 md:order-2 md:col-span-6 bg-gradient-to-b from-[#3b0202] via-[#4a0404] to-[#1a0000] border-2 border-amber-400/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-[0_0_55px_rgba(245,158,11,0.45)] relative overflow-hidden z-10 min-h-[220px]">
-    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-80 h-80 bg-[radial-gradient(circle_at_center,_rgba(250,204,21,0.35),_transparent_65%)]" />
-    <div className="relative z-10">
-      <div className="w-32 h-32 mx-auto rounded-full border-[3px] border-amber-300 shadow-[0_0_25px_rgba(250,204,21,0.8)] overflow-hidden mb-4 bg-[#2b0000] relative">
-        <img
-          src={thalaivarImg}
-          alt="Thalaivar"
-          className="w-full h-full object-cover object-top"
-        />
-      </div>
-      <h2 className="text-2xl md:text-3xl font-extrabold text-white font-tamil drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)]">
-        தளபதி திரு. விஜய்
-      </h2>
-      <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[10px] font-black px-4 py-0.5 rounded-full mt-2 uppercase tracking-wider shadow-[0_0_20px_rgba(251,191,36,0.8)]">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />{" "}
-        President / தலைவர்
-      </div>
-    </div>
-  </div>
+          {/* 2. THALAIVAR */}
+          <div className="order-1 md:order-2 md:col-span-6 bg-gradient-to-b from-[#3b0202] via-[#4a0404] to-[#1a0000] border-2 border-amber-400/70 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-[0_0_55px_rgba(245,158,11,0.45)] relative overflow-hidden z-10 min-h-[220px]">
+            <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-80 h-80 bg-[radial-gradient(circle_at_center,_rgba(250,204,21,0.35),_transparent_65%)]" />
+            <div className="relative z-10">
+              <div className="w-32 h-32 mx-auto rounded-full border-[3px] border-amber-300 shadow-[0_0_25px_rgba(250,204,21,0.8)] overflow-hidden mb-4 bg-[#2b0000] relative">
+                <img
+                  src={thalaivarImg}
+                  alt="Thalaivar"
+                  className="w-full h-full object-cover object-top"
+                />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-white font-tamil drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)]">
+                தளபதி திரு. விஜய்
+              </h2>
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[10px] font-black px-4 py-0.5 rounded-full mt-2 uppercase tracking-wider shadow-[0_0_20px_rgba(251,191,36,0.8)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />{" "}
+                President / தலைவர்
+              </div>
+            </div>
+          </div>
 
-  {/* 3. RIGHT COLUMN */}
-  <div className="order-3 md:order-3 md:col-span-3 flex flex-col gap-4">
-    {/* District Secretary */}
-    <div className="flex-1 bg-gradient-to-bl from-gray-950 to-black border border-amber-500/40 rounded-2xl p-3 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.7)] relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:border-amber-300">
-      <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-bl-lg shadow-sm z-10">
-        District Leader
-      </div>
-      <div className="w-14 h-14 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
-        <img
-          src={DtsecImg}
-          alt="Dist Sec"
-          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
-        />
-      </div>
-      <div className="min-w-0 text-left">
-        <p className="text-[9px] text-gray-400 uppercase tracking-widest font-tamil">
-          மாவட்ட செயலாளர்
-        </p>
-        <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate">
-          திரு.ரவிசங்கர்
-        </h3>
-        <p className="text-[9px] text-gray-500 mt-0.5">
-          திருச்சி புறநகர் மேற்கு மாவட்டம்
-        </p>
-      </div>
-    </div>
+          {/* 3. RIGHT COLUMN */}
+          <div className="order-3 md:order-3 md:col-span-3 flex flex-col gap-4">
+            {/* District Secretary */}
+            <div className="flex-1 bg-gradient-to-bl from-gray-950 to-black border border-amber-500/40 rounded-2xl p-3 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.7)] relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:border-amber-300">
+              <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-bl-lg shadow-sm z-10">
+                District Leader
+              </div>
+              <div className="w-14 h-14 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
+                <img
+                  src={DtsecImg}
+                  alt="Dist Sec"
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+                />
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-[9px] text-gray-400 uppercase tracking-widest font-tamil">
+                  மாவட்ட செயலாளர்
+                </p>
+                <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate">
+                  திரு. ரவிசங்கர்
+                </h3>
+                <p className="text-[9px] text-gray-500 mt-0.5">
+                  திருச்சி புறநகர் மேற்கு மாவட்டம்
+                </p>
+              </div>
+            </div>
 
-    {/* District President */}
-    <div className="flex-1 bg-gradient-to-bl from-gray-950 to-black border border-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.7)] relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:border-gray-600">
-      <div className="w-14 h-14 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
-        <img
-          src={leninImg}
-          alt="Dist Pres"
-          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
-        />
-      </div>
-      <div className="min-w-0 text-left">
-        <p className="text-[9px] text-gray-400 uppercase tracking-widest font-tamil">
-          திருச்சி மண்டல ஒருங்கிணைப்பாளர்
-          
-        </p>
-        <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate">
-          திரு. லெனின்
-        </h3>
-      </div>
-    </div>
-  </div>
-</div>
-  
+            {/* District President */}
+            <div className="flex-1 bg-gradient-to-bl from-gray-950 to-black border border-gray-800 rounded-2xl p-3 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.7)] relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:border-gray-600">
+              <div className="w-14 h-14 rounded-full border-2 border-gray-600 overflow-hidden shadow-md shrink-0">
+                <img
+                  src={leninImg}
+                  alt="Dist Pres"
+                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+                />
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="text-[9px] text-gray-400 uppercase tracking-widest font-tamil">
+                  திருச்சி மண்டல ஒருங்கிணைப்பாளர்
+                </p>
+                <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate">
+                  திரு. லெனின்
+                </h3>
+              </div>
+            </div>
+          </div>
         </div>
-
 
         {/* ================= HEADER + SEARCH + PROFILE ================= */}
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -479,7 +467,7 @@ export default function DashboardHome() {
 
         {/* 🔹 Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* Chart 1: Team Distribution */}
+          {/* Chart 1: Member Distribution */}
           <ChartCard
             title="Member Distribution"
             subtitle="By Team (filtered)"
