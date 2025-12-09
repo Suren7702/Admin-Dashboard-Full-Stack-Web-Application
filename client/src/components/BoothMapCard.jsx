@@ -18,7 +18,7 @@ const boothIcon = new L.Icon({
   shadowSize: [41, 41],
 });
 
-export default function BoothMapCard({ district = "Trichy" }) {
+export default function BoothMapCard({ district = "Trichy", taluk = null }) {
   const [booths, setBooths] = useState([]);
   const [center, setCenter] = useState([10.7905, 78.7047]); // default Trichy
   const [loading, setLoading] = useState(false);
@@ -27,33 +27,36 @@ export default function BoothMapCard({ district = "Trichy" }) {
   const mapInstanceRef = useRef(null);
   const markersLayerRef = useRef(null);
 
-  const isMannachanallur =
-    district.toLowerCase().includes("mannach") ||
-    district.toLowerCase().includes("manachan");
+  const isMannachanallur = (taluk || "").toLowerCase().includes("manna");
 
-  // Fetch booths for that "district" / area
+  // 🔄 Fetch booths using TALUK first
   useEffect(() => {
     const fetchBooths = async () => {
       try {
         setLoading(true);
-        const res = await fetch(
-          `${API_URL}/api/booths?district=${encodeURIComponent(district)}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+
+        let url = `${API_URL}/api/booths`;
+
+        if (taluk) {
+          url += `?taluk=${encodeURIComponent(taluk)}`;
+        } else {
+          url += `?district=${encodeURIComponent(district)}`;
+        }
+
+        const res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
         const data = await res.json();
         const list = Array.isArray(data) ? data : [];
 
         setBooths(list);
 
         if (list.length > 0) {
-          // use first booth center
           setCenter([list[0].latitude, list[0].longitude]);
         } else if (isMannachanallur) {
-          // no booths but Mannachanallur required → fix center
           setCenter(MANNACHANALLUR_CENTER);
         }
       } catch (err) {
@@ -64,9 +67,9 @@ export default function BoothMapCard({ district = "Trichy" }) {
     };
 
     fetchBooths();
-  }, [district, isMannachanallur]);
+  }, [district, taluk, isMannachanallur]);
 
-  // Init map once
+  // 🔹 Init map once
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -86,30 +89,19 @@ export default function BoothMapCard({ district = "Trichy" }) {
 
     mapInstanceRef.current = map;
     markersLayerRef.current = markersLayer;
+  }, [isMannachanallur]);
 
-    // optional cleanup
-    // return () => {
-    //   map.remove();
-    //   mapInstanceRef.current = null;
-    //   markersLayerRef.current = null;
-    // };
-  }, [isMannachanallur]); // re-init only if type changes
-
-  // 🔥 Highlight Mannachanallur area + markers + zoom
+  // 🔥 Draw markers + auto zoom
   useEffect(() => {
     const map = mapInstanceRef.current;
     const markersLayer = markersLayerRef.current;
     if (!map || !markersLayer) return;
 
     markersLayer.clearLayers();
-
     const latlngs = [];
 
     booths.forEach((booth) => {
-      if (
-        typeof booth.latitude === "number" &&
-        typeof booth.longitude === "number"
-      ) {
+      if (typeof booth.latitude === "number" && typeof booth.longitude === "number") {
         const latlng = [booth.latitude, booth.longitude];
         latlngs.push(latlng);
 
@@ -121,48 +113,43 @@ export default function BoothMapCard({ district = "Trichy" }) {
             </div>
             <div>${booth.village || ""} • ${booth.taluk || ""}</div>
             <div>Voters: <b>${booth.votersCount || 0}</b></div>
-            ${
-              booth.inchargeName
-                ? `<div>Incharge: <b>${booth.inchargeName}</b></div>`
-                : ""
-            }
+            ${booth.inchargeName ? `<div>Incharge: <b>${booth.inchargeName}</b></div>` : ""}
             ${booth.phone ? `<div>📞 ${booth.phone}</div>` : ""}
           </div>
         `;
+
         marker.bindPopup(popupHtml);
         marker.addTo(markersLayer);
       }
     });
 
-    // ✅ Special handling for Mannachanallur
+    // 🔶 If Mannachanallur — highlight area & restrict bounds
     if (isMannachanallur) {
       const focusCenter = L.latLng(MANNACHANALLUR_CENTER);
 
-      // If booths exist → use bounds of booths
       let bounds;
       if (latlngs.length > 0) {
         bounds = L.latLngBounds(latlngs).pad(0.2);
       } else {
-        // No booths → create artificial bounds around center
         bounds = L.latLngBounds(
           [focusCenter.lat - 0.03, focusCenter.lng - 0.03],
           [focusCenter.lat + 0.03, focusCenter.lng + 0.03]
         );
       }
 
-      map.fitBounds(bounds);        // zoom that area only
-      map.setMaxBounds(bounds.pad(0.3)); // user can't move too far away
+      map.fitBounds(bounds);
+      map.setMaxBounds(bounds.pad(0.3));
 
-      // 🔶 Highlight circle for Mannachanallur area
+      // Highlight circle
       L.circle(focusCenter, {
-        radius: 3000,                // 3km radius approx
+        radius: 3000,
         color: "#f59e0b",
         weight: 2,
         fillColor: "#f59e0b",
         fillOpacity: 0.18,
       }).addTo(markersLayer);
     } else {
-      // Non-Mannachanallur → normal behaviour
+      // Normal district zoom
       if (latlngs.length > 0) {
         const bounds = L.latLngBounds(latlngs).pad(0.2);
         map.fitBounds(bounds);
@@ -185,15 +172,12 @@ export default function BoothMapCard({ district = "Trichy" }) {
               BOOTH COVERAGE
             </p>
             <h3 className="text-sm font-semibold text-white">
-              {district} – Map
+              {taluk || district} – Map
             </h3>
           </div>
         </div>
         <span className="text-[11px] text-gray-500">
-          Booths:{" "}
-          <span className="text-yellow-400 font-semibold">
-            {booths.length}
-          </span>
+          Booths: <span className="text-yellow-400 font-semibold">{booths.length}</span>
         </span>
       </div>
 
@@ -208,8 +192,7 @@ export default function BoothMapCard({ district = "Trichy" }) {
       </div>
 
       <p className="mt-2 text-[11px] text-gray-500">
-        🔴 Highlighted circle = Mannachanallur area • Map auto zoom aagum, veliya
-        pogama clamp pannirukku.
+        🔴 Highlight → Mannachanallur area. Booths auto zoom aagum.
       </p>
     </div>
   );

@@ -663,7 +663,7 @@ export default function DashboardHome() {
           </ChartCard>
 
           {/* Right: Booth Map direct on Dashboard */}
-          <BoothMapCard district="Mannachanallur" />
+          <BoothMapCard district="Trichy" taluk="Mannachanallur" />
         </div>
       </div>
     </DashboardLayout>

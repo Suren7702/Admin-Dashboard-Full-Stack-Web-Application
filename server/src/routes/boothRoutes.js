@@ -5,7 +5,7 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// POST /api/booths  – add new booth
+// CREATE – POST /api/booths
 router.post("/", protect, async (req, res) => {
   try {
     const {
@@ -47,18 +47,87 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// GET /api/booths?district=Trichy – list booths
+// READ (LIST) – GET /api/booths?district=&taluk=
 router.get("/", protect, async (req, res) => {
   try {
-    const { district } = req.query;
+    const { district, taluk } = req.query;
     const query = {};
     if (district) query.district = district;
+    if (taluk) query.taluk = taluk;
 
     const booths = await Booth.find(query).sort({ createdAt: -1 });
     res.json(booths);
   } catch (err) {
     console.error("Get booths error:", err);
     res.status(500).json({ message: "Server error fetching booths" });
+  }
+});
+
+// READ (ONE) – GET /api/booths/:id (optional)
+router.get("/:id", protect, async (req, res) => {
+  try {
+    const booth = await Booth.findById(req.params.id);
+    if (!booth) return res.status(404).json({ message: "Booth not found" });
+    res.json(booth);
+  } catch (err) {
+    console.error("Get booth by id error:", err);
+    res.status(500).json({ message: "Server error fetching booth" });
+  }
+});
+
+// UPDATE – PUT /api/booths/:id
+router.put("/:id", protect, async (req, res) => {
+  try {
+    const {
+      name,
+      code,
+      district,
+      taluk,
+      village,
+      latitude,
+      longitude,
+      votersCount,
+      inchargeName,
+      phone,
+    } = req.body;
+
+    const booth = await Booth.findById(req.params.id);
+    if (!booth) {
+      return res.status(404).json({ message: "Booth not found" });
+    }
+
+    booth.name = name ?? booth.name;
+    booth.code = code ?? booth.code;
+    booth.district = district ?? booth.district;
+    booth.taluk = taluk ?? booth.taluk;
+    booth.village = village ?? booth.village;
+    booth.latitude = latitude ?? booth.latitude;
+    booth.longitude = longitude ?? booth.longitude;
+    booth.votersCount = votersCount ?? booth.votersCount;
+    booth.inchargeName = inchargeName ?? booth.inchargeName;
+    booth.phone = phone ?? booth.phone;
+
+    const updated = await booth.save();
+    res.json(updated);
+  } catch (err) {
+    console.error("Update booth error:", err);
+    res.status(500).json({ message: "Server error updating booth" });
+  }
+});
+
+// DELETE – DELETE /api/booths/:id
+router.delete("/:id", protect, async (req, res) => {
+  try {
+    const booth = await Booth.findById(req.params.id);
+    if (!booth) {
+      return res.status(404).json({ message: "Booth not found" });
+    }
+
+    await booth.deleteOne();
+    res.json({ message: "Booth deleted successfully" });
+  } catch (err) {
+    console.error("Delete booth error:", err);
+    res.status(500).json({ message: "Server error deleting booth" });
   }
 });
 
