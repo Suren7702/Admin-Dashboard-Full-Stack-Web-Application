@@ -310,13 +310,11 @@ export default function DashboardHome() {
       <div className="min-w-0 text-left">
         <p className="text-[9px] text-gray-400 uppercase tracking-widest font-tamil">
           திருச்சி மண்டல ஒருங்கிணைப்பாளர்
+          
         </p>
         <h3 className="text-sm font-bold text-white font-tamil leading-tight truncate">
           திரு. லெனின்
         </h3>
-        <p className="text-[9px] text-gray-500 mt-0.5">
-          திருச்சி புறநகர் மேற்கு மாவட்டம்
-        </p>
       </div>
     </div>
   </div>
