@@ -11,6 +11,8 @@ import kizhaiRoutes from "./routes/kizhaiRoutes.js";// ✅ New Route
 // Middleware Imports
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
+import boothRoutes from "./routes/boothRoutes.js";
+
 dotenv.config();
 connectDB();
 
@@ -26,6 +28,7 @@ app.use("/api/members", memberRoutes);
 
 // ✅ இங்கே "/api/kizhais" என்று சொன்னால்...
 app.use("/api/kizhais", kizhaiRoutes); 
+app.use("/api/booths", boothRoutes);
 
 // Error Handling
 app.use(notFound);

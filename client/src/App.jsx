@@ -13,6 +13,8 @@ import NotFound from "./pages/NotFound.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import MaanaduSupporters from "./pages/MaanaduSupporters.jsx";
 import KizhaiKazhagam from "./pages/KizhaiKazhagam"; 
+import BoothMap from "./pages/BoothMap";
+import AddBooth from "./pages/dashboard/AddBooth";
 
 export default function App() {
   const isAuthenticated = !!localStorage.getItem("token");
@@ -36,11 +38,14 @@ export default function App() {
           <Route path="/dashboard/volunteers" element={<Volunteers />} />
            <Route path="/dashboard/kizhai" element={<KizhaiKazhagam />} />
           <Route path="/dashboard/approvals" element={<Approvals />} />
+          <Route path="/dashboard/booths/add" element={<AddBooth />} />
           <Route
             path="/dashboard/maanadu-supporters"   // 🔥 fixed path
             element={<MaanaduSupporters />}
           />
         </Route>
+        
+          <Route path="/booths-map" element={<BoothMap />} />
 
         {/* Root redirect */}
         <Route

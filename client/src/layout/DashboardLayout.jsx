@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Maximize,
   Minimize,
-  MapPin //
+  MapPin
 } from "lucide-react";
 import { ChevronDown } from "lucide-react";
 
@@ -69,12 +69,13 @@ export default function DashboardLayout({ children }) {
     navigate("/login");
   };
 
-const navItems = [
+  // ⭐ MENU ITEMS (merged with Booth Map / Kizhai Kazhagam)
+  const navItems = [
     { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
-    
-    // 👇 புதுசா சேர்த்த லைன் இதுதான் (New Line Here) 👇
-    { label: "Kizhai Kazhagam", path: "/dashboard/kizhai", icon: <MapPin size={20} /> },
-    
+
+    // 👉 இங்கே தான் நம்ம Booth Map / Kizhai Kazhagam entry
+    { label: "Kizhai Kazhagam (Booth Map)", path: "/dashboard/kizhai", icon: <MapPin size={20} /> },
+    { label: "Add Booth", path: "/dashboard/booths/add", icon: <MapPin size={20} /> },
     { label: "Members", path: "/dashboard/members", icon: <Users size={20} /> },
     { label: "Volunteers", path: "/dashboard/volunteers", icon: <Hand size={20} /> },
     { label: "Approvals", path: "/dashboard/approvals", icon: <CheckCircle size={20} /> },
@@ -100,32 +101,36 @@ const navItems = [
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-       {/* ... inside sidebar ... */}
-<div className="h-16 flex items-center gap-3 px-6 border-b border-gray-800 relative overflow-hidden bg-gradient-to-r from-red-900/10 to-transparent">
-  {/* Top Line */}
-  <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></div>
-  
-  {/* Logo with Glow */}
-  <div className="relative group cursor-pointer">
-    <div className="absolute inset-0 bg-yellow-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
-    <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-red-800 to-black flex items-center justify-center border border-yellow-500/40 shadow-xl">
-      <span className="font-black text-yellow-400 text-xs tracking-tighter">TVK</span>
-    </div>
-  </div>
+        {/* Sidebar Top Brand */}
+        <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-800 relative overflow-hidden bg-gradient-to-r from-red-900/10 to-transparent">
+          {/* Top Line */}
+          <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></div>
+          
+          {/* Logo with Glow */}
+          <div className="relative group cursor-pointer">
+            <div className="absolute inset-0 bg-yellow-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
+            <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-red-800 to-black flex items-center justify-center border border-yellow-500/40 shadow-xl">
+              <span className="font-black text-yellow-400 text-xs tracking-tighter">TVK</span>
+            </div>
+          </div>
 
-  {/* Text with Dropdown Icon */}
-  <div className="flex-1 cursor-pointer group">
-    <h1 className="font-bold text-gray-100 tracking-wide text-sm group-hover:text-yellow-400 transition-colors">ADMIN</h1>
-    <div className="flex items-center gap-1">
-      <p className="text-[10px] text-gray-400 uppercase tracking-wider group-hover:text-gray-200">திருச்சி மேற்கு மாவட்டம் </p>
-      <ChevronDown size={10} className="text-gray-500 group-hover:text-yellow-500 transition-colors" />
-    </div>
-  </div>
-  
-  <button onClick={() => setSidebarOpen(false)} className="md:hidden ml-auto text-gray-400">
-    <X size={20} />
-  </button>
-</div>
+          {/* Text with Dropdown Icon */}
+          <div className="flex-1 cursor-pointer group">
+            <h1 className="font-bold text-gray-100 tracking-wide text-sm group-hover:text-yellow-400 transition-colors">
+              ADMIN
+            </h1>
+            <div className="flex items-center gap-1">
+              <p className="text-[10px] text-gray-400 uppercase tracking-wider group-hover:text-gray-200">
+                திருச்சி மேற்கு மாவட்டம் 
+              </p>
+              <ChevronDown size={10} className="text-gray-500 group-hover:text-yellow-500 transition-colors" />
+            </div>
+          </div>
+          
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden ml-auto text-gray-400">
+            <X size={20} />
+          </button>
+        </div>
 
         {/* Navigation Links */}
         <div className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-120px)]">
@@ -145,7 +150,9 @@ const navItems = [
                     : "text-gray-400 hover:text-gray-100 hover:bg-gray-900"
                 }`}
               >
-                {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.6)]"></div>}
+                {active && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.6)]"></div>
+                )}
                 <span className={active ? "text-yellow-500" : "text-gray-500 group-hover:text-gray-300"}>
                   {item.icon}
                 </span>
@@ -167,7 +174,6 @@ const navItems = [
         </div>
       </aside>
 
-
       {/* ================= MAIN CONTENT ================= */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
@@ -183,39 +189,39 @@ const navItems = [
               <Menu size={20} />
             </button>
             
-            {/* New Feature: Breadcrumbs */}
+            {/* Breadcrumbs */}
             <nav className="hidden md:flex items-center text-sm text-gray-500">
-               <span className="hover:text-gray-300 cursor-pointer">App</span>
-               {pathnames.map((value, index) => {
-                 const to = `/${pathnames.slice(0, index + 1).join("/")}`;
-                 return (
-                   <span key={to} className="flex items-center">
-                     <ChevronRight size={14} className="mx-1" />
-                     <Link to={to} className="capitalize hover:text-yellow-500 transition-colors">
-                       {value.replace("-", " ")}
-                     </Link>
-                   </span>
-                 );
-               })}
+              <span className="hover:text-gray-300 cursor-pointer">App</span>
+              {pathnames.map((value, index) => {
+                const to = `/${pathnames.slice(0, index + 1).join("/")}`;
+                return (
+                  <span key={to} className="flex items-center">
+                    <ChevronRight size={14} className="mx-1" />
+                    <Link to={to} className="capitalize hover:text-yellow-500 transition-colors">
+                      {value.replace("-", " ")}
+                    </Link>
+                  </span>
+                );
+              })}
             </nav>
           </div>
 
-          {/* Center Title (Hidden on small mobile to fit search/profile) */}
+          {/* Center Title */}
           <div className="hidden lg:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-             <h1 className="text-xl font-black font-tamil tracking-wide whitespace-nowrap text-white drop-shadow-md">
-               தமிழக வெற்றிக் கழகம்
-             </h1>
+            <h1 className="text-xl font-black font-tamil tracking-wide whitespace-nowrap text-white drop-shadow-md">
+              தமிழக வெற்றிக் கழகம்
+            </h1>
           </div>
 
           {/* Right: Actions */}
           <div className="flex items-center gap-3 md:gap-5">
             
-            {/* New Feature: Time Display */}
+            {/* Time Display */}
             <div className="hidden xl:block text-xs font-mono text-gray-500 mr-2">
-               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
 
-            {/* New Feature: Full Screen */}
+            {/* Full Screen */}
             <button 
               onClick={toggleFullScreen} 
               className="hidden md:block text-gray-400 hover:text-white transition-colors"
@@ -224,7 +230,7 @@ const navItems = [
               {isFullScreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
 
-            {/* New Feature: Notifications */}
+            {/* Notifications */}
             <div className="relative">
               <button 
                 onClick={() => setNotifOpen(!notifOpen)}
@@ -271,8 +277,8 @@ const navItems = [
                   <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)}></div>
                   <div className="absolute right-0 mt-3 w-48 bg-[#1a1d24] border border-gray-700 rounded-xl shadow-2xl z-20 py-1 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-3 border-b border-gray-700">
-                        <p className="text-sm text-white font-medium">{user?.name}</p>
-                        <p className="text-xs text-gray-500">{user?.role}</p>
+                      <p className="text-sm text-white font-medium">{user?.name}</p>
+                      <p className="text-xs text-gray-500">{user?.role}</p>
                     </div>
                     <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors">
                       Profile Settings
@@ -294,13 +300,12 @@ const navItems = [
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth custom-scrollbar">
           <div className="max-w-7xl mx-auto">
-             {/* Simple Page Header could go here */}
-             <div className="mb-6 md:flex md:items-center md:justify-between">
-                <h2 className="text-2xl font-bold text-white capitalize">
-                  {location.pathname.split("/").pop().replace("-", " ") || "Dashboard"}
-                </h2>
-             </div>
-             {children}
+            <div className="mb-6 md:flex md:items-center md:justify-between">
+              <h2 className="text-2xl font-bold text-white capitalize">
+                {location.pathname.split("/").pop().replace("-", " ") || "Dashboard"}
+              </h2>
+            </div>
+            {children}
           </div>
         </main>
 
