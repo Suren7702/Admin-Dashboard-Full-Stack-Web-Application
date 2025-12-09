@@ -3,9 +3,9 @@ import mongoose from "mongoose";
 
 const boothSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },        // Booth name
-    code: { type: String, required: true },        // Booth code/ID
-    district: { type: String, required: true },    // eg: "Trichy"
+    name: { type: String, required: true },
+    code: { type: String, required: true },
+    district: { type: String, required: true }, // eg: "Trichy"
     taluk: { type: String },
     village: { type: String },
     latitude: { type: Number, required: true },

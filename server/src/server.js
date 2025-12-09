@@ -13,6 +13,7 @@ import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
 import boothRoutes from "./routes/boothRoutes.js";
 
+
 dotenv.config();
 connectDB();
 
