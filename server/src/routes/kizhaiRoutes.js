@@ -6,6 +6,7 @@ const router = express.Router();
 /*  
 ===========================================================
  🔓 PUBLIC ROUTE – Google Form Style (NO LOGIN REQUIRED)
+  -> used by: POST /api/kizhais/public
 ===========================================================
 */
 router.post("/public", async (req, res) => {
@@ -17,6 +18,7 @@ router.post("/public", async (req, res) => {
       taluk,
       district,
       memberCount,
+      targetCount,
       presidentName,
       contactNumber,
     } = req.body;
@@ -35,30 +37,31 @@ router.post("/public", async (req, res) => {
       taluk,
       district,
       memberCount: Number(memberCount) || 0,
+      targetCount: Number(targetCount) || 0,
       presidentName,
       contactNumber,
-      source: "public-form", // track as public entry (optional)
+      source: "public-form", // optional tracking
     });
 
-    return res.json({
+    return res.status(201).json({
       success: true,
       message: "Kizhai Kazhagam added successfully!",
       kizhai: newKizhai,
     });
   } catch (err) {
     console.error("Public Kizhai Error:", err);
-    res.status(400).json({ message: err.message });
+    return res.status(400).json({ message: err.message });
   }
 });
 
-
 /*  
 ===========================================================
- 🔒 PROTECTED CRUD ROUTES (Your Existing Logic)
+ 🔒 NORMAL CRUD ROUTES (Dashboard / Admin use)
+  -> base path: /api/kizhais
 ===========================================================
 */
 
-// GET ALL
+// GET ALL – GET /api/kizhais
 router.get("/", async (req, res) => {
   try {
     const kizhais = await Kizhai.find().sort({ createdAt: -1 });
@@ -68,7 +71,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// CREATE NEW (Dashboard)
+// CREATE NEW (Dashboard) – POST /api/kizhais
 router.post("/", async (req, res) => {
   try {
     const newKizhai = new Kizhai(req.body);
@@ -79,7 +82,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// UPDATE
+// UPDATE – PUT /api/kizhais/:id
 router.put("/:id", async (req, res) => {
   try {
     const updatedKizhai = await Kizhai.findByIdAndUpdate(
@@ -93,7 +96,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE
+// DELETE – DELETE /api/kizhais/:id
 router.delete("/:id", async (req, res) => {
   try {
     await Kizhai.findByIdAndDelete(req.params.id);
