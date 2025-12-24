@@ -1,4 +1,3 @@
-// controllers/authController.js
 import bcrypt from "bcryptjs";
 import fetch from "node-fetch";
 import { UAParser } from "ua-parser-js";
@@ -31,7 +30,7 @@ export const registerUser = async (req, res) => {
       password: hashed,
       role: role || "admin",
       isApproved: false,
-      knownCities: [], // Initialize empty for Login Alerts
+      knownCities: [], // Initialize for Login Alert tracking
     });
 
     const token = generateToken(user._id);
@@ -84,7 +83,7 @@ export const loginUser = async (req, res) => {
     // 🌍 Get IP address
     const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
 
-    // 🌍 Get location (approx)
+    // 🌍 Get location & Security Alert Logic
     let location = {};
     let isNewLocation = false;
     
@@ -98,14 +97,13 @@ export const loginUser = async (req, res) => {
         country: geo.country_name || "Unknown",
       };
 
-      // 🕵️ SECURITY: Login Alert Logic
       const currentCity = location.city;
-      if (!user.knownCities.includes(currentCity)) {
+      // 🕵️ If city hasn't been seen before, flag it
+      if (currentCity !== "Unknown" && !user.knownCities.includes(currentCity)) {
         isNewLocation = true;
         user.knownCities.push(currentCity);
         await user.save();
         console.log(`⚠️ SECURITY ALERT: New login for ${user.email} from ${currentCity}`);
-        // Optionally trigger sendEmail() here
       }
     } catch (e) {
       console.warn("Geo lookup failed");
@@ -141,7 +139,7 @@ export const loginUser = async (req, res) => {
 };
 
 // ------------------------------------------------------------------
-// 3. SESSION MANAGEMENT (GET ACTIVE SESSIONS)
+// 3. GET ACTIVE SESSIONS
 // ------------------------------------------------------------------
 export const getMySessions = async (req, res) => {
   try {
@@ -155,13 +153,14 @@ export const getMySessions = async (req, res) => {
 };
 
 // ------------------------------------------------------------------
-// 4. TERMINATE SPECIFIC SESSION (LOGOUT)
+// 4. LOGOUT / TERMINATE SPECIFIC SESSION
 // ------------------------------------------------------------------
 export const logoutSession = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
     if (!session) return res.status(404).json({ message: "Session not found" });
 
+    // Security Check: Only own sessions
     if (session.user.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -194,12 +193,13 @@ export const terminateOtherSessions = async (req, res) => {
       count: result.modifiedCount 
     });
   } catch (error) {
+    console.error("Purge Error:", error);
     res.status(500).json({ message: "Error terminating sessions" });
   }
 };
 
 // ------------------------------------------------------------------
-// 6. ADMIN / APPROVAL ACTIONS
+// 6. ADMIN APPROVAL ACTIONS
 // ------------------------------------------------------------------
 export const getPendingUsers = async (req, res) => {
   try {

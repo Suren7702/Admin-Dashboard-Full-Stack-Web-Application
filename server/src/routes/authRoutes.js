@@ -6,27 +6,38 @@ import {
   getPendingUsers,
   approveUser,
   rejectUser,
-  getMySessions,   // 👈 Add this
-  logoutSession    // 👈 Add this
+  getMySessions,
+  logoutSession,
+  terminateOtherSessions 
 } from "../controllers/authController.js";
-import { protect } from "../middleware/authMiddleware.js"; // 👈 Import your middleware
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Public/Semi-Public Routes
+// ------------------------------------------------------------------
+// 1. PUBLIC ROUTES
+// ------------------------------------------------------------------
 router.post("/login", loginUser);
 router.post("/register", registerUser);
 router.post("/verify-secret", verifySecret);
 
-// ✅ NEW ROUTES FOR APPROVALS
+// ------------------------------------------------------------------
+// 2. ADMIN APPROVAL ROUTES
+// ------------------------------------------------------------------
 router.get("/pending", getPendingUsers); 
 router.put("/approve/:id", approveUser);
 router.delete("/reject/:id", rejectUser);
 
-// ✅ NEW ROUTES FOR SESSION MANAGEMENT
-// These must be PROTECTED so we know whose sessions to fetch
+// ------------------------------------------------------------------
+// 3. SESSION MANAGEMENT ROUTES (PROTECTED)
+// ------------------------------------------------------------------
 router.get("/sessions", protect, getMySessions); 
-router.delete("/sessions/:id", protect, logoutSession);
-// routes/authRoutes.js
+
+/** * ⚠️ IMPORTANT: "purge-others" MUST come BEFORE ":id" 
+ * Otherwise Express treats "purge-others" as a session ID
+ */
 router.delete("/sessions/purge-others", protect, terminateOtherSessions);
+
+router.delete("/sessions/:id", protect, logoutSession);
+
 export default router;
