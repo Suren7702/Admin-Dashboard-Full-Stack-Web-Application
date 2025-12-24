@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet-routing-machine";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
-import { MapPin, Search, X, Navigation, Clock, Ruler, Building2, Layers } from "lucide-react";
+import { Search, X, Clock, Ruler, Layers } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -73,16 +73,19 @@ export default function BoothMapCard({ district = "Trichy", taluk = null }) {
   useEffect(() => {
     if (!mapContainerRef.current || mapInstanceRef.current) return;
 
+    // Initialize map with touch-friendly settings
     const map = L.map(mapContainerRef.current, {
       center: MANNACHANALLUR_CENTER,
       zoom: 13,
       zoomControl: false,
+      tap: false, // Essential for mobile click handling
+      dragging: !L.Browser.mobile || L.Browser.pointer, // Smooth dragging
     });
 
     L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains:['mt0','mt1','mt2','mt3'],
-        attribution: '&copy; Google Maps Satellite'
+        attribution: '&copy; Google Maps'
     }).addTo(map);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -94,13 +97,19 @@ export default function BoothMapCard({ district = "Trichy", taluk = null }) {
     markersLayerRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
 
-    // Handle map resize on window resize
+    // IMPORTANT: Fixes the map visibility issues on layout changes
     const resizeObserver = new ResizeObserver(() => {
-      map.invalidateSize();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
     });
     resizeObserver.observe(mapContainerRef.current);
 
-    return () => resizeObserver.disconnect();
+    return () => {
+        resizeObserver.disconnect();
+        map.remove();
+        mapInstanceRef.current = null;
+    };
   }, []);
 
   const clearRoute = () => {
@@ -152,6 +161,7 @@ export default function BoothMapCard({ district = "Trichy", taluk = null }) {
     routingControlRef.current = control;
   };
 
+  // Global helper for popup buttons
   window.__routeToBooth = (id) => {
     const booth = booths.find((b) => b._id === id);
     if (booth) showRouteToBooth(booth);
@@ -159,7 +169,7 @@ export default function BoothMapCard({ district = "Trichy", taluk = null }) {
 
   useEffect(() => {
     const layer = markersLayerRef.current;
-    if (!layer) return;
+    if (!layer || !booths.length) return;
     layer.clearLayers();
     booths.forEach((booth) => {
       L.marker([booth.latitude, booth.longitude], { icon: boothIcon })
@@ -168,22 +178,22 @@ export default function BoothMapCard({ district = "Trichy", taluk = null }) {
             <h4 class="font-bold text-gray-800 text-[13px] mb-0.5">${booth.name}</h4>
             <p class="text-[9px] text-gray-500 mb-2 uppercase">Booth: ${booth.code}</p>
             <button onclick="window.__routeToBooth('${booth._id}')" 
-              class="w-full bg-cyan-600 text-white text-[10px] py-1.5 rounded font-bold">
+              class="w-full bg-cyan-600 text-white text-[10px] py-2 rounded font-bold active:bg-cyan-700">
               ANALYZE ROUTE
             </button>
           </div>
-        `)
+        `, { closeButton: false })
         .addTo(layer);
     });
   }, [booths]);
 
   return (
-    <div className="bg-[#05070a] border border-gray-800 rounded-2xl md:rounded-[2.5rem] p-4 md:p-6 h-full flex flex-col relative shadow-2xl overflow-hidden">
+    <div className="bg-[#05070a] border border-gray-800 rounded-2xl md:rounded-[2.5rem] p-4 md:p-6 flex flex-col relative shadow-2xl overflow-hidden min-h-[500px] h-[70vh] md:h-full">
       
-      {/* Search & Header UI - Responsive Layout */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 z-10">
+      {/* Search & Header UI */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 z-[1001]">
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="p-2 md:p-3 bg-cyan-500/10 rounded-xl md:rounded-2xl border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]">
+          <div className="p-2 md:p-3 bg-cyan-500/10 rounded-xl md:rounded-2xl border border-cyan-500/20">
             <Layers className="w-4 h-4 md:w-5 md:h-5 text-cyan-400" />
           </div>
           <div>
@@ -200,15 +210,15 @@ export default function BoothMapCard({ district = "Trichy", taluk = null }) {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setSuggestOpen(true); }}
             placeholder="Find booth location..."
-            className="bg-black/40 backdrop-blur-md border border-white/10 text-white text-[12px] pl-10 pr-4 py-2 md:py-2.5 rounded-xl md:rounded-2xl w-full focus:border-cyan-500/50 outline-none transition-all"
+            className="bg-black/40 backdrop-blur-md border border-white/10 text-white text-[12px] pl-10 pr-4 py-2.5 rounded-xl w-full focus:border-cyan-500/50 outline-none"
           />
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           
           {suggestOpen && search && (
-            <div className="absolute mt-2 w-full bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl z-[2000] shadow-2xl overflow-hidden">
+            <div className="absolute mt-2 w-full bg-black/95 backdrop-blur-xl border border-white/10 rounded-xl z-[2000] shadow-2xl">
               {booths.filter(b => normalize(b.name).includes(normalize(search))).slice(0, 5).map(b => (
                 <button key={b._id} onClick={() => { mapInstanceRef.current.flyTo([b.latitude, b.longitude], 17); setSuggestOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 text-[11px] text-gray-300 hover:bg-cyan-500/20 transition-colors border-b border-white/5 last:border-0">
+                  className="w-full text-left px-4 py-3 text-[11px] text-gray-300 border-b border-white/5 last:border-0 active:bg-cyan-500/20">
                   {b.name}
                 </button>
               ))}
@@ -217,58 +227,42 @@ export default function BoothMapCard({ district = "Trichy", taluk = null }) {
         </div>
       </div>
 
-      {/* Map View */}
-      <div className="relative flex-1 rounded-xl md:rounded-[2rem] overflow-hidden border border-white/5 group shadow-inner">
+      {/* Map View Wrapper */}
+      <div className="relative flex-1 w-full h-full rounded-xl md:rounded-[2rem] overflow-hidden border border-white/5 shadow-inner">
         {loading && (
-          <div className="absolute inset-0 bg-black/70 z-[1001] flex flex-col items-center justify-center backdrop-blur-md text-white">
-            <div className="w-6 h-6 md:w-8 md:h-8 border-3 md:border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <span className="text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase">Loading Satellite Data</span>
+          <div className="absolute inset-0 bg-black/70 z-[1002] flex flex-col items-center justify-center backdrop-blur-md text-white">
+            <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+            <span className="text-[9px] font-bold uppercase tracking-widest">Loading...</span>
           </div>
         )}
         
-        {/* 🛰️ Responsive Route Overlay Card */}
         {routeInfo && (
-          <div className="absolute top-3 left-3 right-3 md:top-6 md:left-6 md:right-6 z-[1000] flex items-start justify-between gap-2 pointer-events-none">
-            <div className="bg-black/80 md:bg-black/60 backdrop-blur-2xl border border-white/20 p-3 md:p-4 rounded-xl md:rounded-[1.5rem] flex flex-row items-center gap-4 md:gap-8 shadow-2xl animate-in slide-in-from-top-5">
-              <div className="flex items-center gap-2 md:gap-4 pr-3 md:pr-8 border-r border-white/10">
-                <div className="p-1.5 md:p-2.5 bg-cyan-500 rounded-lg md:rounded-xl"><Ruler className="w-3.5 h-3.5 md:w-5 md:h-5 text-black" /></div>
-                <div>
-                  <p className="hidden md:block text-[8px] md:text-[10px] text-gray-400 uppercase font-black">Traversed</p>
-                  <p className="text-sm md:text-lg font-black text-white">{routeInfo.km} <span className="text-[9px] font-normal text-cyan-400">KM</span></p>
-                </div>
+          <div className="absolute top-2 left-2 right-2 md:top-6 md:left-6 md:right-6 z-[1000] flex items-start justify-between gap-2 pointer-events-none">
+            <div className="bg-black/80 backdrop-blur-xl border border-white/20 p-3 md:p-4 rounded-xl flex items-center gap-4 shadow-2xl">
+              <div className="flex items-center gap-2 pr-4 border-r border-white/10">
+                <Ruler className="w-4 h-4 text-cyan-400" />
+                <p className="text-sm md:text-lg font-black text-white">{routeInfo.km} <span className="text-[9px] text-cyan-400">KM</span></p>
               </div>
-              <div className="flex items-center gap-2 md:gap-4">
-                <div className="p-1.5 md:p-2.5 bg-white rounded-lg md:rounded-xl"><Clock className="w-3.5 h-3.5 md:w-5 md:h-5 text-black" /></div>
-                <div>
-                  <p className="hidden md:block text-[8px] md:text-[10px] text-gray-400 uppercase font-black">Estimated</p>
-                  <p className="text-sm md:text-lg font-black text-white">~{routeInfo.mins} <span className="text-[9px] font-normal text-white/60">MIN</span></p>
-                </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-white" />
+                <p className="text-sm md:text-lg font-black text-white">~{routeInfo.mins} <span className="text-[9px] text-white/60">MIN</span></p>
               </div>
             </div>
-            
-            <button onClick={clearRoute} className="pointer-events-auto bg-red-500 hover:bg-red-600 text-white p-2 md:p-3 rounded-lg md:rounded-2xl shadow-xl transition-all">
-              <X className="w-4 h-4 md:w-6 md:h-6" />
+            <button onClick={clearRoute} className="pointer-events-auto bg-red-500 p-2 md:p-3 rounded-lg shadow-xl active:scale-90 transition-transform">
+              <X className="w-4 h-4 text-white" />
             </button>
           </div>
         )}
 
-        <div ref={mapContainerRef} className="h-full w-full grayscale-[0.2] contrast-[1.1]" />
+        {/* The Actual Map Container */}
+        <div ref={mapContainerRef} className="absolute inset-0 z-0 h-full w-full" />
       </div>
 
       <style>{`
-        .satellite-tooltip {
-            background: rgba(0,0,0,0.85) !important;
-            border: 1px solid rgba(255,255,255,0.2) !important;
-            color: #fbbf24 !important;
-            font-weight: 900 !important;
-            text-transform: uppercase !important;
-            font-size: 9px !important;
-            border-radius: 4px !important;
-            padding: 2px 6px !important;
-        }
-        /* Fix for Leaflet controls on small screens */
-        @media (max-width: 640px) {
-          .leaflet-control-zoom { margin-bottom: 20px !important; margin-right: 10px !important; scale: 0.8; }
+        .leaflet-container { background: #05070a !important; height: 100% !important; width: 100% !important; }
+        .satellite-tooltip { background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.2); color: #fbbf24; font-weight: 900; font-size: 9px; padding: 2px 6px; border-radius: 4px; }
+        @media (max-width: 768px) {
+          .leaflet-control-zoom { display: none !important; } /* Hide zoom on mobile to save space */
         }
       `}</style>
     </div>
