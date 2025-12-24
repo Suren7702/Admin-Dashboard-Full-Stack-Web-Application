@@ -1,14 +1,11 @@
 import express from "express";
 import Session from "../models/Session.js";
-import protect from "../middleware/authMiddleware.js"; // your JWT middleware
-import adminOnly from "../middleware/adminMiddleware.js"; // super admin check
+import { protect } from "../middleware/authMiddleware.js";
+import adminOnly from "../middleware/adminMiddleware.js";
 
 const router = express.Router();
 
-/**
- * GET /api/sessions
- * Super Admin → View all sessions
- */
+// 🔍 Get ALL sessions (Super Admin only)
 router.get("/", protect, adminOnly, async (req, res) => {
   try {
     const sessions = await Session.find()
@@ -21,10 +18,7 @@ router.get("/", protect, adminOnly, async (req, res) => {
   }
 });
 
-/**
- * GET /api/sessions/active
- * Super Admin → Only active sessions
- */
+// 🟢 Get ACTIVE sessions only
 router.get("/active", protect, adminOnly, async (req, res) => {
   try {
     const sessions = await Session.find({ isActive: true })
@@ -37,13 +31,11 @@ router.get("/active", protect, adminOnly, async (req, res) => {
   }
 });
 
-/**
- * PUT /api/sessions/:id/logout
- * Super Admin → Force logout a session
- */
+// ❌ Force logout a session
 router.put("/:id/logout", protect, adminOnly, async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
+
     if (!session) {
       return res.status(404).json({ message: "Session not found" });
     }

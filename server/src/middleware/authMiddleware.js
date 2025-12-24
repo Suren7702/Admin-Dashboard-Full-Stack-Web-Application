@@ -1,4 +1,3 @@
-// server/src/middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
@@ -19,13 +18,9 @@ export const protect = async (req, res, next) => {
         return res.status(500).json({ message: "Server misconfiguration" });
       }
 
-      console.log("🛡️ PROTECT got token:", token.slice(0, 20) + "...");
-      console.log("🛡️ VERIFY using JWT_SECRET =", secret);
-
       const decoded = jwt.verify(token, secret);
 
-      console.log("🛡️ DECODED PAYLOAD =", decoded);
-
+      // ✅ Attach user to request
       req.user = await User.findById(decoded.id).select("-password");
 
       if (!req.user) {
@@ -34,12 +29,12 @@ export const protect = async (req, res, next) => {
           .json({ message: "Not authorized, user not found" });
       }
 
-      return next();
+      next();
     } catch (error) {
       console.error("JWT verify failed:", error.message);
       return res.status(401).json({ message: "Not authorized, token failed" });
     }
+  } else {
+    return res.status(401).json({ message: "Not authorized, no token" });
   }
-
-  return res.status(401).json({ message: "Not authorized, no token" });
 };
