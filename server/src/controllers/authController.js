@@ -1,3 +1,4 @@
+// controllers/authController.js
 import bcrypt from "bcryptjs";
 import fetch from "node-fetch";
 import { UAParser } from "ua-parser-js";
@@ -30,6 +31,7 @@ export const registerUser = async (req, res) => {
       password: hashed,
       role: role || "admin",
       isApproved: false,
+      knownCities: [], // Initialize empty for Login Alerts
     });
 
     const token = generateToken(user._id);
@@ -49,7 +51,7 @@ export const registerUser = async (req, res) => {
 };
 
 // ------------------------------------------------------------------
-// 2. LOGIN USER (WITH SESSION + DEVICE + LOCATION TRACKING)
+// 2. LOGIN USER (WITH SESSION + DEVICE + GEO + LOGIN ALERTS)
 // ------------------------------------------------------------------
 export const loginUser = async (req, res) => {
   try {
@@ -80,21 +82,31 @@ export const loginUser = async (req, res) => {
     const ua = parser.getResult();
 
     // 🌍 Get IP address
-    const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
-      req.socket.remoteAddress;
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
 
     // 🌍 Get location (approx)
     let location = {};
+    let isNewLocation = false;
+    
     try {
-      const geo = await fetch(`https://ipapi.co/${ip}/json`).then((r) =>
-        r.json()
-      );
+      const geoRes = await fetch(`https://ipapi.co/${ip}/json`);
+      const geo = await geoRes.json();
+      
       location = {
-        city: geo.city,
-        region: geo.region,
-        country: geo.country_name,
+        city: geo.city || "Unknown",
+        region: geo.region || "Unknown",
+        country: geo.country_name || "Unknown",
       };
+
+      // 🕵️ SECURITY: Login Alert Logic
+      const currentCity = location.city;
+      if (!user.knownCities.includes(currentCity)) {
+        isNewLocation = true;
+        user.knownCities.push(currentCity);
+        await user.save();
+        console.log(`⚠️ SECURITY ALERT: New login for ${user.email} from ${currentCity}`);
+        // Optionally trigger sendEmail() here
+      }
     } catch (e) {
       console.warn("Geo lookup failed");
     }
@@ -110,6 +122,7 @@ export const loginUser = async (req, res) => {
       location,
       tokenId: token,
       isActive: true,
+      isNewLocation, // Flag for the frontend UI
       loginAt: new Date(),
       lastActive: new Date(),
     });
@@ -128,88 +141,12 @@ export const loginUser = async (req, res) => {
 };
 
 // ------------------------------------------------------------------
-// 3. VERIFY SECRET (For Secret Register Page)
-// ------------------------------------------------------------------
-export const verifySecret = (req, res) => {
-  try {
-    const { secretKey } = req.body;
-    const ADMIN_SECRET =
-      process.env.ADMIN_SECRET_KEY || "tvk_admin_secret_123";
-
-    if (secretKey === ADMIN_SECRET) {
-      return res.status(200).json({ valid: true, message: "Key Verified" });
-    } else {
-      return res
-        .status(401)
-        .json({ valid: false, message: "Invalid Secret Key" });
-    }
-  } catch (error) {
-    console.error("Secret verification error:", error);
-    res.status(500).json({ message: "Server error verifying key" });
-  }
-};
-
-// ------------------------------------------------------------------
-// 4. GET PENDING USERS (For Approvals Page)
-// ------------------------------------------------------------------
-export const getPendingUsers = async (req, res) => {
-  try {
-    const users = await User.find({ isApproved: false })
-      .select("-password")
-      .sort({ createdAt: -1 });
-
-    res.json(users);
-  } catch (error) {
-    console.error("Error fetching pending users:", error);
-    res.status(500).json({ message: "Error fetching pending users" });
-  }
-};
-
-// ------------------------------------------------------------------
-// 5. APPROVE USER
-// ------------------------------------------------------------------
-export const approveUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    user.isApproved = true;
-    await user.save();
-
-    res.json({ message: "User approved successfully", user });
-  } catch (error) {
-    console.error("Error approving user:", error);
-    res.status(500).json({ message: "Error approving user" });
-  }
-};
-
-// ------------------------------------------------------------------
-// 6. REJECT USER (Delete)
-// ------------------------------------------------------------------
-export const rejectUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json({ message: "User rejected and removed" });
-  } catch (error) {
-    console.error("Error rejecting user:", error);
-    res.status(500).json({ message: "Error rejecting user" });
-  }
-};
-// ------------------------------------------------------------------
-// 7. GET ACTIVE SESSIONS (For the Session Management Page)
+// 3. SESSION MANAGEMENT (GET ACTIVE SESSIONS)
 // ------------------------------------------------------------------
 export const getMySessions = async (req, res) => {
   try {
-    // We find sessions where the user matches the protected request user
     const sessions = await Session.find({ user: req.user._id })
-      .sort({ lastActive: -1 }); // Show most recent first
-
+      .sort({ lastActive: -1 });
     res.json(sessions);
   } catch (error) {
     console.error("Error fetching sessions:", error);
@@ -218,25 +155,99 @@ export const getMySessions = async (req, res) => {
 };
 
 // ------------------------------------------------------------------
-// 8. LOGOUT / TERMINATE SESSION
+// 4. TERMINATE SPECIFIC SESSION (LOGOUT)
 // ------------------------------------------------------------------
 export const logoutSession = async (req, res) => {
   try {
-    // Terminate a specific session by its ID
     const session = await Session.findById(req.params.id);
-    
     if (!session) return res.status(404).json({ message: "Session not found" });
 
-    // Ensure the user can only logout their own sessions
     if (session.user.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
     session.isActive = false;
     await session.save();
-
     res.json({ message: "Session terminated" });
   } catch (error) {
     res.status(500).json({ message: "Error logging out session" });
+  }
+};
+
+// ------------------------------------------------------------------
+// 5. GLOBAL PANIC BUTTON (TERMINATE OTHERS)
+// ------------------------------------------------------------------
+export const terminateOtherSessions = async (req, res) => {
+  try {
+    const currentToken = req.headers.authorization.split(" ")[1];
+
+    const result = await Session.updateMany(
+      { 
+        user: req.user._id, 
+        tokenId: { $ne: currentToken } 
+      },
+      { isActive: false }
+    );
+
+    res.json({ 
+      message: "All other sessions terminated successfully", 
+      count: result.modifiedCount 
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error terminating sessions" });
+  }
+};
+
+// ------------------------------------------------------------------
+// 6. ADMIN / APPROVAL ACTIONS
+// ------------------------------------------------------------------
+export const getPendingUsers = async (req, res) => {
+  try {
+    const users = await User.find({ isApproved: false })
+      .select("-password")
+      .sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching pending users" });
+  }
+};
+
+export const approveUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.isApproved = true;
+    await user.save();
+    res.json({ message: "User approved successfully", user });
+  } catch (error) {
+    res.status(500).json({ message: "Error approving user" });
+  }
+};
+
+export const rejectUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "User rejected and removed" });
+  } catch (error) {
+    res.status(500).json({ message: "Error rejecting user" });
+  }
+};
+
+// ------------------------------------------------------------------
+// 7. SECRET VERIFICATION
+// ------------------------------------------------------------------
+export const verifySecret = (req, res) => {
+  try {
+    const { secretKey } = req.body;
+    const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || "tvk_admin_secret_123";
+
+    if (secretKey === ADMIN_SECRET) {
+      return res.status(200).json({ valid: true, message: "Key Verified" });
+    } else {
+      return res.status(401).json({ valid: false, message: "Invalid Secret Key" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Server error verifying key" });
   }
 };

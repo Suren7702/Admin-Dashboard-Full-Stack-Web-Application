@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Monitor, Smartphone, Globe, LogOut, ShieldCheck, Clock } from "lucide-react";
+import DashboardLayout from "../../layout/DashboardLayout.jsx";
+import { Monitor, Smartphone, Globe, LogOut, ShieldCheck, Clock, AlertTriangle } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
@@ -7,7 +8,6 @@ export default function ActiveSessions() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔄 Fetch sessions from the new route we added
   const fetchSessions = async () => {
     try {
       setLoading(true);
@@ -17,7 +17,6 @@ export default function ActiveSessions() {
         },
       });
       const data = await res.json();
-      // Ensure we set an array even if the backend fails
       setSessions(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Session fetch error:", err);
@@ -30,7 +29,6 @@ export default function ActiveSessions() {
     fetchSessions();
   }, []);
 
-  // 🚫 Terminate a session (Logout specific device)
   const handleTerminate = async (id) => {
     if (!window.confirm("Terminate this login session?")) return;
     try {
@@ -40,81 +38,128 @@ export default function ActiveSessions() {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
-      fetchSessions(); // Refresh list after deletion
+      fetchSessions();
     } catch (err) {
       console.error("Termination error", err);
     }
   };
 
-  return (
-    <div className="bg-[#05070a] border border-gray-800 rounded-[2rem] p-4 md:p-8 min-h-[400px]">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-xl md:text-2xl font-black text-white flex items-center gap-3">
-            <ShieldCheck className="text-cyan-500 w-6 h-6" /> 
-            Active Access Points
-          </h2>
-          <p className="text-gray-500 text-xs md:text-sm mt-1">Manage devices currently logged into your TVK account</p>
-        </div>
-        <button onClick={fetchSessions} className="p-2 hover:bg-white/5 rounded-full transition-colors">
-          <Clock className="w-5 h-5 text-gray-400" />
-        </button>
-      </div>
+  const handlePurgeOthers = async () => {
+    const confirmMessage = "⚠️ SECURITY ALERT: This will log you out of every other device and browser. Continue?";
+    if (!window.confirm(confirmMessage)) return;
 
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+    try {
+      const res = await fetch(`${API_URL}/api/auth/sessions/purge-others`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (res.ok) {
+        alert("Success: All other active sessions have been terminated.");
+        fetchSessions();
+      }
+    } catch (err) {
+      console.error("Purge failed", err);
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-[2rem] p-6 shadow-2xl transition-all duration-300">
+        
+        {/* Header with Panic Button */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-10">
+          <div>
+            <h2 className="text-2xl font-black text-white flex items-center gap-3">
+              <ShieldCheck className="text-cyan-500 w-7 h-7" /> 
+              Security Command
+            </h2>
+            <p className="text-gray-500 text-sm mt-1">
+              Active sessions: <span className="text-cyan-400 font-mono font-bold">{sessions.length}</span>
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handlePurgeOthers}
+              className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500 border border-red-500/30 text-red-500 hover:text-white px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95"
+            >
+              <AlertTriangle size={16} />
+              Terminate Other Sessions
+            </button>
+
+            <button onClick={fetchSessions} className="p-3 bg-gray-800 hover:bg-gray-700 rounded-2xl transition-colors border border-white/5">
+              <Clock className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="space-y-4">
-          {sessions.length === 0 ? (
-            <div className="text-center py-10 text-gray-600 border border-dashed border-gray-800 rounded-2xl">
-              No active sessions found.
-            </div>
-          ) : (
-            sessions.map((session) => (
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em]">Scanning Active Nodes</p>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {sessions.map((session) => (
               <div 
                 key={session._id}
-                className={`flex flex-col md:flex-row items-start md:items-center justify-between p-4 md:p-6 rounded-2xl border transition-all ${
+                className={`flex flex-col md:flex-row items-center justify-between p-5 rounded-2xl border transition-all duration-500 ${
                   session.isActive 
-                    ? "bg-cyan-500/5 border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.05)]" 
-                    : "bg-gray-900/20 border-gray-800 opacity-60"
+                    ? "bg-cyan-500/5 border-cyan-500/20 shadow-lg" 
+                    : "bg-gray-950/40 border-gray-800 opacity-60"
                 }`}
               >
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-black/40 rounded-xl border border-white/5">
-                    {session.device === "mobile" ? (
-                      <Smartphone className="w-6 h-6 text-cyan-400" />
-                    ) : (
-                      <Monitor className="w-6 h-6 text-cyan-400" />
-                    )}
+                <div className="flex items-center gap-5 w-full">
+                  <div className="p-4 bg-black/60 rounded-2xl border border-white/5">
+                    {session.device === "mobile" ? <Smartphone className="w-6 h-6 text-cyan-400" /> : <Monitor className="w-6 h-6 text-cyan-400" />}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-white font-bold">{session.os || "Unknown OS"} • {session.browser}</h4>
+
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h4 className="text-white font-bold text-lg">{session.os} • {session.browser}</h4>
+                      
+                      {/* Live Badge */}
                       {session.isActive && (
-                        <span className="text-[10px] px-2 py-0.5 bg-cyan-500 text-black font-black rounded-full uppercase tracking-tighter">
+                        <div className="px-2 py-0.5 bg-cyan-500 text-black text-[9px] font-black rounded-md uppercase flex items-center gap-1">
+                          <span className="w-1 h-1 bg-black rounded-full animate-pulse"></span>
                           Live
-                        </span>
+                        </div>
+                      )}
+
+                      {/* 🕵️ NEW LOCATION ALERT BADGE */}
+                      {session.isNewLocation && (
+                        <div className="px-2 py-0.5 bg-orange-500 text-white text-[9px] font-black rounded-md uppercase flex items-center gap-1">
+                          <AlertTriangle size={10} />
+                          New Location
+                        </div>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                      <Globe className="w-3 h-3" /> 
-                      {session.location?.city || "Unknown City"}, {session.location?.country || "Earth"} • {session.ipAddress}
-                    </p>
+                    
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2">
+                      <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5" /> 
+                        {session.location?.city}, {session.location?.country}
+                      </p>
+                      <p className="text-xs text-gray-600 font-mono">IP: {session.ipAddress}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between w-full md:w-auto mt-4 md:mt-0 gap-6">
+                <div className="flex items-center gap-8 mt-6 md:mt-0 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-4 md:pt-0">
                   <div className="text-left md:text-right">
-                    <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest">Last Sync</p>
-                    <p className="text-xs text-gray-400">{new Date(session.lastActive).toLocaleString()}</p>
+                    <p className="text-[10px] text-gray-600 uppercase font-black tracking-widest">Heartbeat</p>
+                    <p className="text-xs text-gray-400 font-mono">
+                       {new Date(session.lastActive).toLocaleTimeString()}
+                    </p>
                   </div>
                   
                   {session.isActive && (
                     <button 
                       onClick={() => handleTerminate(session._id)}
-                      className="p-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all active:scale-90"
+                      className="p-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl transition-all active:scale-90"
                       title="Terminate Session"
                     >
                       <LogOut className="w-5 h-5" />
@@ -122,10 +167,10 @@ export default function ActiveSessions() {
                   )}
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

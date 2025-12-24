@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean, 
       default: false 
     },
+    knownCities: {
+    type: [String],
+    default: [],
+  },
   },
   { timestamps: true }
 );

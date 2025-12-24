@@ -27,5 +27,6 @@ router.delete("/reject/:id", rejectUser);
 // These must be PROTECTED so we know whose sessions to fetch
 router.get("/sessions", protect, getMySessions); 
 router.delete("/sessions/:id", protect, logoutSession);
-
+// routes/authRoutes.js
+router.delete("/sessions/purge-others", protect, terminateOtherSessions);
 export default router;
