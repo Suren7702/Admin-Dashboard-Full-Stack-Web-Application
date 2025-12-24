@@ -1,6 +1,9 @@
-// server/src/controllers/authController.js
 import bcrypt from "bcryptjs";
+import fetch from "node-fetch";
+import UAParser from "ua-parser-js";
+
 import User from "../models/User.js";
+import Session from "../models/Session.js";
 import generateToken from "../utils/generateToken.js";
 
 // ------------------------------------------------------------------
@@ -22,13 +25,12 @@ export const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
 
-    // Note: By default, isApproved is false (defined in User model)
     const user = await User.create({
       name,
       email,
       password: hashed,
       role: role || "admin",
-      isApproved: false // Explicitly setting false for safety
+      isApproved: false,
     });
 
     const token = generateToken(user._id);
@@ -48,22 +50,21 @@ export const registerUser = async (req, res) => {
 };
 
 // ------------------------------------------------------------------
-// 2. LOGIN USER (Updated with Approval Check)
+// 2. LOGIN USER (WITH SESSION + DEVICE + LOCATION TRACKING)
 // ------------------------------------------------------------------
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // ✅ NEW: Check if user is approved
+    // 🔒 Approval check
     if (user.isApproved === false) {
-      return res.status(403).json({ 
-        message: "Account pending approval. Please contact the Super Admin." 
+      return res.status(403).json({
+        message: "Account pending approval. Please contact the Super Admin.",
       });
     }
 
@@ -72,7 +73,47 @@ export const loginUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // 🔑 Generate JWT
     const token = generateToken(user._id);
+
+    // 🧠 Parse device info
+    const parser = new UAParser(req.headers["user-agent"]);
+    const ua = parser.getResult();
+
+    // 🌍 Get IP address
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.socket.remoteAddress;
+
+    // 🌍 Get location (approx)
+    let location = {};
+    try {
+      const geo = await fetch(`https://ipapi.co/${ip}/json`).then((r) =>
+        r.json()
+      );
+      location = {
+        city: geo.city,
+        region: geo.region,
+        country: geo.country_name,
+      };
+    } catch (e) {
+      console.warn("Geo lookup failed");
+    }
+
+    // 🧾 Save login session
+    await Session.create({
+      user: user._id,
+      role: user.role,
+      ipAddress: ip,
+      device: ua.device.type || "desktop",
+      os: ua.os.name,
+      browser: ua.browser.name,
+      location,
+      tokenId: token,
+      isActive: true,
+      loginAt: new Date(),
+      lastActive: new Date(),
+    });
 
     res.json({
       _id: user._id,
@@ -93,12 +134,15 @@ export const loginUser = async (req, res) => {
 export const verifySecret = (req, res) => {
   try {
     const { secretKey } = req.body;
-    const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || "tvk_admin_secret_123";
+    const ADMIN_SECRET =
+      process.env.ADMIN_SECRET_KEY || "tvk_admin_secret_123";
 
     if (secretKey === ADMIN_SECRET) {
       return res.status(200).json({ valid: true, message: "Key Verified" });
     } else {
-      return res.status(401).json({ valid: false, message: "Invalid Secret Key" });
+      return res
+        .status(401)
+        .json({ valid: false, message: "Invalid Secret Key" });
     }
   } catch (error) {
     console.error("Secret verification error:", error);
@@ -111,8 +155,10 @@ export const verifySecret = (req, res) => {
 // ------------------------------------------------------------------
 export const getPendingUsers = async (req, res) => {
   try {
-    // Find all users where isApproved is false (or undefined)
-    const users = await User.find({ isApproved: false }).select("-password").sort({ createdAt: -1 });
+    const users = await User.find({ isApproved: false })
+      .select("-password")
+      .sort({ createdAt: -1 });
+
     res.json(users);
   } catch (error) {
     console.error("Error fetching pending users:", error);
@@ -126,7 +172,9 @@ export const getPendingUsers = async (req, res) => {
 export const approveUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     user.isApproved = true;
     await user.save();
@@ -144,7 +192,9 @@ export const approveUser = async (req, res) => {
 export const rejectUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     res.json({ message: "User rejected and removed" });
   } catch (error) {

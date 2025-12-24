@@ -11,7 +11,7 @@ import authRoutes from "./routes/authRoutes.js";
 import memberRoutes from "./routes/memberRoutes.js";
 import kizhaiRoutes from "./routes/kizhaiRoutes.js";
 import boothRoutes from "./routes/boothRoutes.js";
-
+import sessionRoutes from "./routes/sessionRoutes.js";
 // Middleware Imports
 import { errorHandler, notFound } from "./middleware/errorMiddleware.js";
 
@@ -29,7 +29,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/members", memberRoutes);
 app.use("/api/kizhais", kizhaiRoutes);
 app.use("/api/booths", boothRoutes);
-
+app.use("/api/sessions", sessionRoutes);
 /* 
    🟣 PUBLIC KIZHAI FORM ROUTE (NO LOGIN REQUIRED)
    Used by: POST /api/kizhais/public  (PublicKizhaiForm.jsx)

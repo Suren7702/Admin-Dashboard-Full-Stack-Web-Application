@@ -17,6 +17,8 @@ import BoothMap from "./pages/BoothMap";
 import AddBooth from "./pages/dashboard/AddBooth";
 import PublicKizhaiForm from "./pages/PublicKizhaiForm.jsx";
 
+// ✅ NEW: Super Admin Active Sessions
+import ActiveSessions from "./pages/SuperAdmin/ActiveSessions.jsx";
 
 export default function App() {
   const isAuthenticated = !!localStorage.getItem("token");
@@ -38,17 +40,24 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardHome />} />
           <Route path="/dashboard/members" element={<Members />} />
           <Route path="/dashboard/volunteers" element={<Volunteers />} />
-           <Route path="/dashboard/kizhai" element={<KizhaiKazhagam />} />
+          <Route path="/dashboard/kizhai" element={<KizhaiKazhagam />} />
           <Route path="/dashboard/approvals" element={<Approvals />} />
           <Route path="/dashboard/booths/add" element={<AddBooth />} />
           <Route path="/kizhai-form" element={<PublicKizhaiForm />} />
           <Route
-            path="/dashboard/maanadu-supporters"   // 🔥 fixed path
+            path="/dashboard/maanadu-supporters"
             element={<MaanaduSupporters />}
           />
+
+          {/* 🔐 SUPER ADMIN ROUTE */}
+          <Route
+            path="/super-admin/sessions"
+            element={<ActiveSessions />}
+          />
         </Route>
-        
-          <Route path="/booths-map" element={<BoothMap />} />
+
+        {/* Public booth map */}
+        <Route path="/booths-map" element={<BoothMap />} />
 
         {/* Root redirect */}
         <Route
