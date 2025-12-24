@@ -201,3 +201,42 @@ export const rejectUser = async (req, res) => {
     res.status(500).json({ message: "Error rejecting user" });
   }
 };
+// ------------------------------------------------------------------
+// 7. GET ACTIVE SESSIONS (For the Session Management Page)
+// ------------------------------------------------------------------
+export const getMySessions = async (req, res) => {
+  try {
+    // We find sessions where the user matches the protected request user
+    const sessions = await Session.find({ user: req.user._id })
+      .sort({ lastActive: -1 }); // Show most recent first
+
+    res.json(sessions);
+  } catch (error) {
+    console.error("Error fetching sessions:", error);
+    res.status(500).json({ message: "Error fetching sessions" });
+  }
+};
+
+// ------------------------------------------------------------------
+// 8. LOGOUT / TERMINATE SESSION
+// ------------------------------------------------------------------
+export const logoutSession = async (req, res) => {
+  try {
+    // Terminate a specific session by its ID
+    const session = await Session.findById(req.params.id);
+    
+    if (!session) return res.status(404).json({ message: "Session not found" });
+
+    // Ensure the user can only logout their own sessions
+    if (session.user.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    session.isActive = false;
+    await session.save();
+
+    res.json({ message: "Session terminated" });
+  } catch (error) {
+    res.status(500).json({ message: "Error logging out session" });
+  }
+};
