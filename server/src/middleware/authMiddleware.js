@@ -1,3 +1,4 @@
+// middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Session from "../models/Session.js";
@@ -5,58 +6,43 @@ import Session from "../models/Session.js";
 export const protect = async (req, res, next) => {
   let token;
 
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
+  if (req.headers.authorization?.startsWith("Bearer")) {
     try {
-      // 🔑 Extract token
       token = req.headers.authorization.split(" ")[1];
-
       const secret = process.env.JWT_SECRET?.trim();
-      if (!secret) {
-        console.error("❌ ERROR: JWT_SECRET is missing from .env");
-        return res.status(500).json({ message: "Server misconfiguration" });
-      }
 
-      // 🔐 Verify JWT
+      // 1. Verify JWT
       const decoded = jwt.verify(token, secret);
 
-      // 🚫 IMPORTANT: Check if this session is still ACTIVE
-      const session = await Session.findOne({
-        tokenId: token,
-        isActive: true,
+      // 2. Find Session (Check if token matches exactly)
+      // We use .trim() on the token just in case there's whitespace
+      const session = await Session.findOne({ 
+        tokenId: token.trim(), 
+        isActive: true 
       });
 
       if (!session) {
-        return res.status(401).json({
-          message: "Session expired or logged out",
-        });
+        console.warn(`Session not found for token starting with: ${token.substring(0, 10)}`);
+        return res.status(401).json({ message: "Session expired or invalid" });
       }
 
-      // 👤 Attach user to request
+      // 3. Attach User
       req.user = await User.findById(decoded.id).select("-password");
-
+      
       if (!req.user) {
-        return res.status(401).json({
-          message: "Not authorized, user not found",
-        });
+        return res.status(401).json({ message: "User not found" });
       }
 
-      // 🔄 Update last active time (heartbeat)
+      // 4. Update Session Heartbeat
       session.lastActive = new Date();
       await session.save();
 
       next();
     } catch (error) {
-      console.error("JWT verify failed:", error.message);
-      return res.status(401).json({
-        message: "Not authorized, token failed",
-      });
+      console.error("Auth Error:", error.message);
+      return res.status(401).json({ message: "Not authorized" });
     }
   } else {
-    return res.status(401).json({
-      message: "Not authorized, no token",
-    });
+    return res.status(401).json({ message: "No token, authorization denied" });
   }
 };
