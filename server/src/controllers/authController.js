@@ -1,7 +1,6 @@
 import bcrypt from "bcryptjs";
 import fetch from "node-fetch";
-import UAParser from "ua-parser-js";
-
+import { UAParser } from "ua-parser-js";
 import User from "../models/User.js";
 import Session from "../models/Session.js";
 import generateToken from "../utils/generateToken.js";
