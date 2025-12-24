@@ -10,14 +10,14 @@ import {
   LogOut, 
   Menu, 
   X, 
-  Search, 
   Bell, 
   ChevronRight,
   Maximize,
   Minimize,
-  MapPin
+  MapPin,
+  ShieldCheck, // 🛡️ Security Icon
+  ChevronDown
 } from "lucide-react";
-import { ChevronDown } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
   const navigate = useNavigate();
@@ -47,7 +47,7 @@ export default function DashboardLayout({ children }) {
     }
   };
 
-  // Dummy Notifications (Replace with API data later)
+  // Dummy Notifications
   const notifications = [
     { id: 1, text: "New member registration in Trichy", time: "2 min ago", unread: true },
     { id: 2, text: "Volunteer approval pending", time: "1 hour ago", unread: false },
@@ -59,7 +59,7 @@ export default function DashboardLayout({ children }) {
     try {
       return JSON.parse(localStorage.getItem("user")) || { name: "Admin", role: "District Secretary" };
     } catch {
-      return null;
+      return { name: "Admin", role: "Guest" };
     }
   })();
 
@@ -69,20 +69,18 @@ export default function DashboardLayout({ children }) {
     navigate("/login");
   };
 
-  // ⭐ MENU ITEMS (merged with Booth Map / Kizhai Kazhagam)
+  // ⭐ MENU ITEMS (Includes Active Sessions)
   const navItems = [
     { label: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={20} /> },
-
-    // 👉 இங்Kazhagamகே தான் நம்ம Booth Map / Kizhai Kazhagam entry
     { label: "கிளைகள்", path: "/dashboard/kizhai", icon: <MapPin size={20} /> },
     { label: "பூத்", path: "/dashboard/booths/add", icon: <MapPin size={20} /> },
     { label: "நிர்வாகிகள்", path: "/dashboard/members", icon: <Users size={20} /> },
     { label: "தொண்டர்கள்", path: "/dashboard/volunteers", icon: <Hand size={20} /> },
     { label: "ஒப்புதல்", path: "/dashboard/approvals", icon: <CheckCircle size={20} /> },
     { label: "Maanadu Supporters", path: "/dashboard/maanadu-supporters", icon: <Heart size={20} /> },
+    { label: "Active Sessions", path: "/dashboard/active-sessions", icon: <ShieldCheck size={20} className="text-cyan-400" /> },
   ];
 
-  // Breadcrumb Logic
   const pathnames = location.pathname.split("/").filter((x) => x);
 
   return (
@@ -103,10 +101,8 @@ export default function DashboardLayout({ children }) {
       >
         {/* Sidebar Top Brand */}
         <div className="h-16 flex items-center gap-3 px-6 border-b border-gray-800 relative overflow-hidden bg-gradient-to-r from-red-900/10 to-transparent">
-          {/* Top Line */}
           <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-600 via-yellow-400 to-red-600 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></div>
           
-          {/* Logo with Glow */}
           <div className="relative group cursor-pointer">
             <div className="absolute inset-0 bg-yellow-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
             <div className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-red-800 to-black flex items-center justify-center border border-yellow-500/40 shadow-xl">
@@ -114,7 +110,6 @@ export default function DashboardLayout({ children }) {
             </div>
           </div>
 
-          {/* Text with Dropdown Icon */}
           <div className="flex-1 cursor-pointer group">
             <h1 className="font-bold text-gray-100 tracking-wide text-sm group-hover:text-yellow-400 transition-colors">
               ADMIN
@@ -162,7 +157,6 @@ export default function DashboardLayout({ children }) {
           })}
         </div>
 
-        {/* Sidebar Footer */}
         <div className="absolute bottom-0 w-full p-4 border-t border-gray-800 bg-[#0a0a0a]">
           <button 
             onClick={handleLogout}
@@ -176,11 +170,7 @@ export default function DashboardLayout({ children }) {
 
       {/* ================= MAIN CONTENT ================= */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        
-        {/* Top Header */}
         <header className="h-16 z-30 flex items-center justify-between px-6 border-b border-gray-800 bg-[#0f1115]/80 backdrop-blur-md sticky top-0 shadow-sm">
-          
-          {/* Left: Mobile Toggle & Breadcrumbs */}
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(true)}
@@ -189,7 +179,6 @@ export default function DashboardLayout({ children }) {
               <Menu size={20} />
             </button>
             
-            {/* Breadcrumbs */}
             <nav className="hidden md:flex items-center text-sm text-gray-500">
               <span className="hover:text-gray-300 cursor-pointer">App</span>
               {pathnames.map((value, index) => {
@@ -206,36 +195,23 @@ export default function DashboardLayout({ children }) {
             </nav>
           </div>
 
-          {/* Center Title */}
           <div className="hidden lg:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-            <h1 className="text-xl font-black font-tamil tracking-wide whitespace-nowrap text-white drop-shadow-md">
+            <h1 className="text-xl font-black tracking-wide whitespace-nowrap text-white drop-shadow-md">
               தமிழக வெற்றிக் கழகம்
             </h1>
           </div>
 
-          {/* Right: Actions */}
           <div className="flex items-center gap-3 md:gap-5">
-            
-            {/* Time Display */}
             <div className="hidden xl:block text-xs font-mono text-gray-500 mr-2">
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
 
-            {/* Full Screen */}
-            <button 
-              onClick={toggleFullScreen} 
-              className="hidden md:block text-gray-400 hover:text-white transition-colors"
-              title="Toggle Fullscreen"
-            >
+            <button onClick={toggleFullScreen} className="hidden md:block text-gray-400 hover:text-white transition-colors">
               {isFullScreen ? <Minimize size={18} /> : <Maximize size={18} />}
             </button>
 
-            {/* Notifications */}
             <div className="relative">
-              <button 
-                onClick={() => setNotifOpen(!notifOpen)}
-                className="relative text-gray-400 hover:text-white transition-colors p-1"
-              >
+              <button onClick={() => setNotifOpen(!notifOpen)} className="relative text-gray-400 hover:text-white p-1">
                 <Bell size={20} />
                 <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500 border border-[#0f1115]"></span>
               </button>
@@ -243,10 +219,9 @@ export default function DashboardLayout({ children }) {
               {notifOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setNotifOpen(false)}></div>
-                  <div className="absolute right-0 mt-3 w-72 bg-[#1a1d24] border border-gray-700 rounded-xl shadow-2xl z-20 py-2 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute right-0 mt-3 w-72 bg-[#1a1d24] border border-gray-700 rounded-xl shadow-2xl z-20 py-2">
                     <div className="px-4 py-2 border-b border-gray-700 flex justify-between items-center">
                       <h3 className="text-sm font-semibold text-white">Notifications</h3>
-                      <span className="text-[10px] text-yellow-500 cursor-pointer">Mark all read</span>
                     </div>
                     <div className="max-h-64 overflow-y-auto">
                       {notifications.map((n) => (
@@ -263,10 +238,7 @@ export default function DashboardLayout({ children }) {
 
             {/* Profile Dropdown */}
             <div className="relative">
-              <button 
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-3 focus:outline-none group"
-              >
+              <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-3 group focus:outline-none">
                 <div className="h-9 w-9 rounded-full bg-gradient-to-br from-white to-gray-400 border-2 border-[#0f1115] flex items-center justify-center text-black font-bold shadow-lg group-hover:scale-105 transition-transform">
                   {user?.name?.[0]?.toUpperCase() || "A"}
                 </div>
@@ -275,7 +247,7 @@ export default function DashboardLayout({ children }) {
               {profileOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setProfileOpen(false)}></div>
-                  <div className="absolute right-0 mt-3 w-48 bg-[#1a1d24] border border-gray-700 rounded-xl shadow-2xl z-20 py-1 animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute right-0 mt-3 w-56 bg-[#1a1d24] border border-gray-700 rounded-xl shadow-2xl z-20 py-1 animate-in fade-in slide-in-from-top-2">
                     <div className="px-4 py-3 border-b border-gray-700">
                       <p className="text-sm text-white font-medium">{user?.name}</p>
                       <p className="text-xs text-gray-500">{user?.role}</p>
@@ -283,21 +255,24 @@ export default function DashboardLayout({ children }) {
                     <button className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 transition-colors">
                       Profile Settings
                     </button>
+                    {/* Security Link */}
                     <button 
-                      onClick={handleLogout} 
-                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 transition-colors"
+                      onClick={() => { navigate("/dashboard/active-sessions"); setProfileOpen(false); }}
+                      className="w-full text-left px-4 py-2 text-sm text-cyan-400 hover:bg-gray-800 transition-colors flex items-center gap-2"
                     >
+                      <ShieldCheck size={16} />
+                      Active Sessions
+                    </button>
+                    <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-800 transition-colors border-t border-gray-700 mt-1">
                       Sign Out
                     </button>
                   </div>
                 </>
               )}
             </div>
-
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             <div className="mb-6 md:flex md:items-center md:justify-between">
@@ -308,10 +283,8 @@ export default function DashboardLayout({ children }) {
             {children}
           </div>
         </main>
-
       </div>
-      
-      {/* Scrollbar Styles */}
+
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }

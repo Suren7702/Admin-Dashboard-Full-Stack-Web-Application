@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/auth/Login.jsx";
@@ -17,10 +16,11 @@ import BoothMap from "./pages/BoothMap";
 import AddBooth from "./pages/dashboard/AddBooth";
 import PublicKizhaiForm from "./pages/PublicKizhaiForm.jsx";
 
-// ✅ NEW: Super Admin Active Sessions
+// ✅ Import Active Sessions
 import ActiveSessions from "./pages/SuperAdmin/ActiveSessions.jsx";
 
 export default function App() {
+  // We check auth status inside the render to stay reactive
   const isAuthenticated = !!localStorage.getItem("token");
 
   return (
@@ -37,22 +37,21 @@ export default function App() {
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
+          {/* Main Dashboard Pages */}
           <Route path="/dashboard" element={<DashboardHome />} />
           <Route path="/dashboard/members" element={<Members />} />
           <Route path="/dashboard/volunteers" element={<Volunteers />} />
           <Route path="/dashboard/kizhai" element={<KizhaiKazhagam />} />
           <Route path="/dashboard/approvals" element={<Approvals />} />
           <Route path="/dashboard/booths/add" element={<AddBooth />} />
+          
+          {/* 🛡️ ACTIVE SESSIONS ROUTE (Matched to Sidebar Path) */}
+          <Route path="/dashboard/active-sessions" element={<ActiveSessions />} />
+          
           <Route path="/kizhai-form" element={<PublicKizhaiForm />} />
           <Route
             path="/dashboard/maanadu-supporters"
             element={<MaanaduSupporters />}
-          />
-
-          {/* 🔐 SUPER ADMIN ROUTE */}
-          <Route
-            path="/super-admin/sessions"
-            element={<ActiveSessions />}
           />
         </Route>
 
